@@ -101,7 +101,9 @@ int clamp(int x, int min, int max) {
 void runPWM() {
 
 	int step_signal = 0;
-	double upper_bound = 740;
+	// Max has to be 740
+	double upper_bound = 400;
+	double lower_bound = 100;
 	double bound = 0;
 
 
@@ -119,6 +121,7 @@ void runPWM() {
 
 			   }
 			   */
+
 			if ( MOTOR_DIRECTION == COUNTER_CLOCKWISE && bound <= upper_bound) {
 				bound += STEP_ANGLE/2;
 				step_signal = ~step_signal;
@@ -126,7 +129,7 @@ void runPWM() {
 				sleep_us((MOTOR_PWM));
 
 
-			} else if ( MOTOR_DIRECTION == CLOCKWISE && bound >= 0) {
+			} else if ( MOTOR_DIRECTION == CLOCKWISE && bound >= lower_bound) {
 				bound -= STEP_ANGLE/2;
 				step_signal = ~step_signal;
 				gpio_put(MOTOR_STEP_PIN, step_signal);
@@ -149,12 +152,14 @@ int main(void) {
 	double period;
 	int step_signal = 0;
 	int kl;
+	int PWM_MAX = 1200;
 
 
 	double input, output;
 	
-	PID mypid(&distance, &error, &set_point, 0.002, 0.007, 0.0003, DIRECT);
+	PID mypid(&distance, &error, &set_point, 30, 2, 3, DIRECT);
 	mypid.SetMode(AUTOMATIC);
+	mypid.SetOutputLimits(-PWM_MAX, PWM_MAX);
 	stdio_init_all();
 
 	multicore_launch_core1(runPWM);
@@ -165,17 +170,16 @@ int main(void) {
 	absolute_time_t ultra_sonic_timer = get_absolute_time();
 	while (true) {
 
-		if (absolute_time_diff_us(ultra_sonic_timer, get_absolute_time()) >= 5) {
 			distance = brain.readSensor();
-			if (distance < 20) {
+			if (distance < 23 && distance > 0.15) {
 				//error = -(distance - set_point);
 				//error = pid.calculate_error(error, 0.1);
 				mypid.Compute();
 
-				MOTOR_PWM =  300 *  abs(1 - (error)); 
+				MOTOR_PWM =  PWM_MAX - abs(error);
 				MOTOR_ENABLED = 1;
 
-				if ((set_point + 3) - (distance) < 0) {
+				if ((set_point) - (distance) <= 0) {
 					MOTOR_DIRECTION = COUNTER_CLOCKWISE;
 					gpio_put(MOTOR_DIR_PIN, COUNTER_CLOCKWISE);
 				}
@@ -184,15 +188,9 @@ int main(void) {
 					MOTOR_DIRECTION = CLOCKWISE;
 					gpio_put(MOTOR_DIR_PIN, CLOCKWISE);
 				}
-				printf("Distance: %.2f cm | Error: %.2f | Period = %d us | Direction: %s\n", distance, error, MOTOR_PWM, MOTOR_DIRECTION? "CW" : "CCW");
+				printf("Distance: %.2f cm | Error: %.6f | Period = %d us | Direction: %s\n", distance, error, MOTOR_PWM, MOTOR_DIRECTION? "CW" : "CCW");
 
 
-
-			} else {
-				//MOTOR_ENABLED = 0;
-			}
-
-			ultra_sonic_timer = get_absolute_time();
 
 		}
 
