@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
-include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+set(PICO_SDK_FETCH_FROM_GIT on)
+include(pico-sdk/pico_sdk_init.cmake)
 project(bbba C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)

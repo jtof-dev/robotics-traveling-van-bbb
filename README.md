@@ -1,6 +1,6 @@
-This is the codebase for the ball and beam robot powered by the arudino.
+- using brettb's PID library, ported to the Pi Pico by [samyarsadat](https://github.com/samyarsadat/Pico-PID-Library)
 
-The system builds with CMAKE so to build
+the system builds with CMAKE, so to build:
 
 ```
     mdkir build
@@ -9,5 +9,4 @@ The system builds with CMAKE so to build
     make
 ```
 
-
-after generating the bbb.uf2 file, that will be uploaded to the raspberry pi
+after generating the bbb.uf2 file, upload using `upload.sh`
