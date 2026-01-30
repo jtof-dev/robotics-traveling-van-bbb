@@ -9,4 +9,6 @@ the system builds with CMAKE, so to build:
     make
 ```
 
+- aside from `cmake`, the only other package needed is `pico-sdk` (aur)
+
 after generating the bbb.uf2 file, upload using `upload.sh`
