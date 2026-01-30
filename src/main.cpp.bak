@@ -101,9 +101,6 @@ void runPWM() {
          step_signal = ~step_signal;
          gpio_put(MOTOR_STEP_PIN, step_signal);
          sleep_us((MOTOR_PWM));
-
-
-
          }
          */
 
