@@ -14,9 +14,9 @@
 #define SCL_PIN 5
 
 // future touchscreen commands
-// #define CMD_UPDATE_KP 0x01
-// #define CMD_UPDATE_KI 0x02
-// #define CMD_UPDATE_KD 0x03
+#define CMD_UPDATE_KP 0x01
+#define CMD_UPDATE_KI 0x02
+#define CMD_UPDATE_KD 0x03
 
 volatile int motor_pwm_delay = 1000;
 volatile bool motor_enabled = false;
@@ -35,11 +35,11 @@ bool motor_step_callback(struct repeating_timer *t) {
 }
 
 // future core 1 touchscreen function
-// void core1_entry() {
-//   while (1) {
-//     tight_loop_contents();
-//   }
-// }
+void core1_entry() {
+  while (1) {
+    tight_loop_contents();
+  }
+}
 
 int main() {
   stdio_init_all();

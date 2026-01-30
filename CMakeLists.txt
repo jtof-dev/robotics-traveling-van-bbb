@@ -12,8 +12,8 @@ pico_sdk_init()
 
 add_executable(bbb
     src/main.cpp
-    lib/PID/PID_v1.cpp
-    lib/VL53L0X/VL53L0X.cpp
+    src/PID_v1.cpp
+    src/VL53L0X.cpp
 )
 
 target_include_directories(bbb PRIVATE 
