@@ -68,11 +68,13 @@ int main() {
   gpio_init(MOTOR_DIR_PIN);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
-  float distance = 12.0f, set_point = 12.0f, control_output = 0.0f;
-  PID myPID(&distance, &control_output, &set_point, 30, 2, 3, DIRECT);
-  myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(-1000, 1000);
+  float distance = BALL_SETPOINT_CM, set_point = BALL_SETPOINT_CM,
+        control_output = 0.0f;
+  PID myPID(&distance, &control_output, &set_point, DEFAULT_KP, DEFAULT_KI,
+            DEFAULT_KD, DIRECT);
 
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(PID_LIMIT_MIN, PID_LIMIT_MAX);
   multicore_launch_core1(core1_entry);
 
   struct repeating_timer timer;
@@ -89,19 +91,18 @@ int main() {
     }
 
     uint16_t mm = sensor.readRangeContinuousMillimeters();
-    if (sensor.timeoutOccurred()) {
-      printf("Sensor Timeout!\n");
-      motor_enabled = false;
-    } else if (mm < 1200) {         // standard range check
-      distance = (float)mm / 10.0f; // convert mm to cm
+    if (!sensor.timeoutOccurred() && mm < 1200) {
+      distance = (float)mm / 10.0f; //
 
       myPID.Compute();
 
       motor_direction = (control_output > 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 
-      motor_pwm_delay = 1200 - abs((int)control_output);
+      // Use constant for base delay calculation
+      motor_pwm_delay = MOTOR_BASE_DELAY - abs((int)control_output);
 
-      motor_enabled = (abs(control_output) > 8);
+      // Use constant for deadzone
+      motor_enabled = (abs(control_output) > MOTOR_DEADZONE);
 
       printf("Dist: %.1f cm | Out: %.1f | Speed: %d\n", distance,
              control_output, motor_pwm_delay);
@@ -109,8 +110,33 @@ int main() {
       motor_enabled = false;
     }
 
-    sleep_ms(20);
+    sleep_ms(PID_SAMPLE_MS); // Loop timing from .hpp
   }
+
+  //   uint16_t mm = sensor.readRangeContinuousMillimeters();
+  //   if (sensor.timeoutOccurred()) {
+  //     printf("Sensor Timeout!\n");
+  //     motor_enabled = false;
+  //   } else if (mm < 1200) {         // standard range check
+  //     distance = (float)mm / 10.0f; // convert mm to cm
+  //
+  //     myPID.Compute();
+  //
+  //     motor_direction = (control_output > 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
+  //
+  //     motor_pwm_delay = 1200 - abs((int)control_output);
+  //
+  //     motor_enabled = (abs(control_output) > 8);
+  //
+  //     printf("Dist: %.1f cm | Out: %.1f | Speed: %d\n", distance,
+  //     control_output,
+  //            motor_pwm_delay);
+  //   } else {
+  //     motor_enabled = false;
+  //   }
+  //
+  //   sleep_ms(20);
+  // }
 
   return 0;
 }
