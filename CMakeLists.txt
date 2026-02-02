@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}/pico-sdk)
-include(pico-sdk/pico_sdk_init.cmake)
+set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}lib/pico-sdk)
+include(lib/pico-sdk/pico_sdk_init.cmake)
 
 project(bbba C CXX ASM)
 
@@ -12,13 +12,12 @@ pico_sdk_init()
 
 add_executable(bbb
     src/main.cpp
-    src/PID_v1.cpp
-    src/VL53L0X.cpp
+    lib/pid/pid.cpp
+    lib/VL53L0X/VL53L0X.cpp
 )
 
-target_include_directories(bbb PRIVATE 
-    ${CMAKE_CURRENT_LIST_DIR}/include
-    ${CMAKE_CURRENT_LIST_DIR}/lib/PID
+target_include_directories(bbb PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/lib/pid
     ${CMAKE_CURRENT_LIST_DIR}/lib/VL53L0X
 )
 
