@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}lib/pico-sdk)
 include(lib/pico-sdk/pico_sdk_init.cmake)
 
-project(bbba C CXX ASM)
+project(bbb C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
