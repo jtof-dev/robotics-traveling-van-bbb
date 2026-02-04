@@ -19,12 +19,14 @@ then build with CMAKE:
 
 ## pins
 
-| pin | function | description |
-|---|---|---|
-| 4 | I2C SDA | ToF sensor |
-| 5 | I2C SCL | ToF sensor |
-| 14 | GPIO | stepper motor direction |
-| 15 | GPIO | stepper motor step |
+| pin | function | description             |
+| --- | -------- | ----------------------- |
+| 4   | I2C SDA  | ToF sensor              |
+| 5   | I2C SCL  | ToF sensor              |
+| 14  | GPIO     | stepper motor direction |
+| 15  | GPIO     | stepper motor step      |
+
+- for the motor driver, connect MS1 and MS2 HIGH (3.3V)
 
 ## submodules
 

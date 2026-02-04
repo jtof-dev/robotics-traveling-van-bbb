@@ -9,25 +9,27 @@
 #include "configuration.hpp"
 #include "pid.h"
 
-// thread-safe motor variables
-volatile int32_t current_step_pos = 0;
-volatile int32_t target_step_pos = 0;
+#define I2C_PORT i2c0
+#define SDA_PIN 4
+#define SCL_PIN 5
+
+// future touchscreen commands
+#define CMD_UPDATE_KP 0x01
+#define CMD_UPDATE_KI 0x02
+#define CMD_UPDATE_KD 0x03
+
+volatile int motor_pwm_delay = 1000;
 volatile bool motor_enabled = false;
+volatile int motor_direction = CLOCKWISE;
 
 bool motor_step_callback(struct repeating_timer *t) {
-  if (motor_enabled && current_step_pos != target_step_pos) {
-    // Set Direction based on position error
-    if (target_step_pos > current_step_pos) {
-      gpio_put(MOTOR_DIR_PIN, CLOCKWISE);
-      current_step_pos++;
-    } else {
-      gpio_put(MOTOR_DIR_PIN, COUNTER_CLOCKWISE);
-      current_step_pos--;
-    }
+  static bool step_state = false;
+  if (motor_enabled) {
+    gpio_put(MOTOR_DIR_PIN, motor_direction);
+    step_state = !step_state;
+    gpio_put(MOTOR_STEP_PIN, step_state);
 
-    gpio_put(MOTOR_STEP_PIN, 1);
-    sleep_us(2); // minimum pulse width
-    gpio_put(MOTOR_STEP_PIN, 0);
+    t->delay_us = -motor_pwm_delay;
   }
   return true;
 }
@@ -41,16 +43,15 @@ void core1_entry() {
 
 int main() {
   stdio_init_all();
-  // allow sensors and power rails to stabilize
+  // give the system and ToF sensor time to stabilize
   sleep_ms(2000);
 
-  i2c_init(I2C_PORT, 400 * 1000);
+  i2c_init(I2C_PORT, 400 * 1000); // fast mode 400kHz
   gpio_set_function(SDA_PIN, GPIO_FUNC_I2C);
   gpio_set_function(SCL_PIN, GPIO_FUNC_I2C);
   gpio_pull_up(SDA_PIN);
   gpio_pull_up(SCL_PIN);
 
-  // ToF sensor
   VL53L0X sensor(I2C_PORT, 0x29);
   if (!sensor.init()) {
     printf("failed to detect VL53L0X sensor!\n");
@@ -58,6 +59,7 @@ int main() {
       tight_loop_contents();
   }
 
+  // set timing budget to 20ms for high-speed balancing
   sensor.setMeasurementTimingBudget(20000);
   sensor.startContinuous();
 
@@ -66,27 +68,22 @@ int main() {
   gpio_init(MOTOR_DIR_PIN);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
-  float distance = BALL_SETPOINT_CM;
-  float set_point = BALL_SETPOINT_CM;
-  float control_output = 0.0f;
-
+  float distance = BALL_SETPOINT_CM, set_point = BALL_SETPOINT_CM,
+        control_output = 0.0f;
   PID myPID(&distance, &control_output, &set_point, DEFAULT_KP, DEFAULT_KI,
             DEFAULT_KD, DIRECT);
 
   myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(PID_LIMIT_MIN, PID_LIMIT_MAX); // limits in microsteps
-  myPID.SetSampleTime(PID_SAMPLE_MS);
-
+  myPID.SetOutputLimits(PID_LIMIT_MIN, PID_LIMIT_MAX);
   multicore_launch_core1(core1_entry);
 
   struct repeating_timer timer;
-  add_repeating_timer_us(-MOTOR_STEP_INTERVAL_US, motor_step_callback, NULL,
-                         &timer);
+  add_repeating_timer_us(-1000, motor_step_callback, NULL, &timer);
 
   while (true) {
     if (multicore_fifo_rvalid()) {
       uint32_t cmd = multicore_fifo_pop_blocking();
-      if (cmd == 0x01) { // CMD_UPDATE_KP
+      if (cmd == CMD_UPDATE_KP) {
         uint32_t raw_val = multicore_fifo_pop_blocking();
         float new_kp = (float)raw_val / 100.0f;
         myPID.SetTunings(new_kp, myPID.GetKi(), myPID.GetKd());
@@ -95,21 +92,25 @@ int main() {
 
     uint16_t mm = sensor.readRangeContinuousMillimeters();
     if (!sensor.timeoutOccurred() && mm < 1200) {
-      distance = (float)mm / 10.0f; // mm to cm
+      distance = (float)mm / 10.0f; //
 
       myPID.Compute();
 
-      // the PID output is now the absolute step position (angle)
-      target_step_pos = (int32_t)control_output;
-      motor_enabled = true;
+      motor_direction = (control_output > 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 
-      printf("Dist: %.1f cm | Target Step: %ld | Current: %ld\n", distance,
-             target_step_pos, current_step_pos);
+      // Use constant for base delay calculation
+      motor_pwm_delay = MOTOR_BASE_DELAY - abs((int)control_output);
+
+      // Use constant for deadzone
+      motor_enabled = (abs(control_output) > MOTOR_DEADZONE);
+
+      printf("Dist: %.1f cm | Out: %.1f | Speed: %d\n", distance,
+             control_output, motor_pwm_delay);
     } else {
-      target_step_pos = 0;
+      motor_enabled = false;
     }
 
-    sleep_ms(PID_SAMPLE_MS);
+    sleep_ms(PID_SAMPLE_MS); // Loop timing from .hpp
   }
 
   return 0;
