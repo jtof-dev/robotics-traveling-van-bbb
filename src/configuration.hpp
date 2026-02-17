@@ -6,8 +6,8 @@
 #define SDA_PIN 4
 #define SCL_PIN 5
 
-#define MOTOR_STEP_PIN 15
-#define MOTOR_DIR_PIN 14
+#define MOTOR_STEP_PIN 16
+#define MOTOR_DIR_PIN 17
 #define STEP_ANGLE 1.80f
 
 // microstepping logic (TMC2208 MS1=H, MS2=H)
