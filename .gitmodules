@@ -1,9 +1,3 @@
 [submodule "lib/pico-sdk"]
 	path = lib/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "lib/VL53L0X"]
-	path = lib/VL53L0X
-	url = https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp.git
-[submodule "lib/pid"]
-	path = lib/pid
-	url = https://github.com/jtof-dev/pico-pid-library.git
