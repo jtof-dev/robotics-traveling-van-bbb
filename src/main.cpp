@@ -59,7 +59,7 @@ int main() {
   }
 
   sensor.setMeasurementTimingBudget(20000);
-  sensor.startContinuous();
+  sensor.startContinuous(50);
 
   gpio_init(MOTOR_STEP_PIN);
   gpio_set_dir(MOTOR_STEP_PIN, GPIO_OUT);
@@ -109,7 +109,7 @@ int main() {
       target_step_pos = 0;
     }
 
-    sleep_ms(500);
+    sleep_ms(50);
   }
 
   return 0;
