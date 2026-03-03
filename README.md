@@ -48,12 +48,12 @@ then build with CMAKE (or use `scripts/buildFresh.sh`):
 
 ## pi pico
 
-| **pico pin** | **label** | **connection**           | **purpose**        |
-| ------------ | --------- | ------------------------ | ------------------ |
-| **pin 40**   | VBUS      | schottky diode (anode)   | USB power output   |
-| **pin 39**   | VSYS      | schottky diode (cathode) | main system input  |
-| **pin 38**   | GND       | GND rail                 | common ground      |
-| **pin 36**   | 3V3       | 3.3V rail                | logic power output |
+| **pico pin** | **label** | **connection**           | **purpose**             |
+| ------------ | --------- | ------------------------ | ----------------------- |
+| **pin 40**   | VBUS      | schottky diode (anode)   | 3.3V out of voltage reg |
+| **pin 40**   | VBUS      | schottky diode (cathode) | main system input       |
+| **pin 38**   | GND       | GND rail                 | common ground           |
+| **pin 36**   | 3V3       | 3.3V rail                | logic power output      |
 
 # notes
 
