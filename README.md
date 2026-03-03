@@ -55,6 +55,11 @@ then build with CMAKE (or use `scripts/buildFresh.sh`):
 | **pin 38**   | GND       | GND rail                 | common ground      |
 | **pin 36**   | 3V3       | 3.3V rail                | logic power output |
 
+# notes
+
+- beam is 303mm long
+- distance from sensor to end of beam is 13mm
+
 ## submodules
 
 - [raspberrypi/pico-sdk](https://github.com/raspberrypi/pico-sdk)
