@@ -2,9 +2,13 @@
 #define CONFIGURATION_HPP
 
 // ToF sensor
-#define I2C_PORT i2c0
-#define SDA_PIN 4
-#define SCL_PIN 5
+// #define I2C_PORT i2c0
+// #define SDA_PIN 4
+// #define SCL_PIN 5
+
+#define I2C_PORT i2c1
+#define SDA_PIN 6
+#define SCL_PIN 7
 
 #define MOTOR_STEP_PIN 16
 #define MOTOR_DIR_PIN 17

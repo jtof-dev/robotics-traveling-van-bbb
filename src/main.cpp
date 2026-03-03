@@ -109,7 +109,7 @@ int main() {
       target_step_pos = 0;
     }
 
-    sleep_ms(PID_SAMPLE_MS);
+    sleep_ms(500);
   }
 
   return 0;
