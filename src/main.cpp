@@ -21,7 +21,7 @@ void move_steps(int steps, bool direction) {
   gpio_put(MOTOR_DIR_PIN, direction);
   for (int i = 0; i < steps; ++i) {
     gpio_put(MOTOR_STEP_PIN, 1);
-    sleep_us(1);
+    sleep_us(100);
     gpio_put(MOTOR_STEP_PIN, 0);
     sleep_us(DELAY_US);
   }
@@ -37,7 +37,7 @@ int main() {
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
   // Calculate steps for 15 degrees
-  int steps_for_15_deg = (int)((15.0f / 360.0f) * STEPS_PER_REV_MICRO);
+  int steps_for_15_deg = (int)((20.0f / 360.0f) * STEPS_PER_REV_MICRO);
 
   sleep_ms(1000);
   printf("Starting motor control...\n");
@@ -46,17 +46,17 @@ int main() {
     // Move to +15 degrees from horizontal
     printf("Moving to +15 degrees\n");
     move_steps(steps_for_15_deg, CLOCKWISE);
-    sleep_ms(2000);
+    sleep_ms(500);
 
     // Move back to horizontal from +15
     printf("Returning to horizontal\n");
     move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
-    sleep_ms(2000);
+    sleep_ms(500);
 
     // Move to -15 degrees from horizontal
     printf("Moving to -15 degrees\n");
     move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
-    sleep_ms(2000);
+    sleep_ms(500);
 
     // Move back to horizontal from -15
     printf("Returning to horizontal\n");
