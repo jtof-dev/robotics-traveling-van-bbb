@@ -2,8 +2,8 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
-#define MOTOR_STEP_PIN 15
-#define MOTOR_DIR_PIN 14
+#define MOTOR_STEP_PIN 16
+#define MOTOR_DIR_PIN 17
 
 #define CLOCKWISE 1
 #define COUNTER_CLOCKWISE 0
@@ -39,26 +39,29 @@ int main() {
   // Calculate steps for 15 degrees
   int steps_for_15_deg = (int)((15.0f / 360.0f) * STEPS_PER_REV_MICRO);
 
-  // Steps for 30 degrees (to move from +15 to -15 and back)
-  int steps_for_30_deg = steps_for_15_deg * 2;
-
   sleep_ms(1000);
   printf("Starting motor control...\n");
 
-  // Move to +15 degrees to start
-  move_steps(steps_for_15_deg, CLOCKWISE);
-  sleep_ms(2000);
-
   while (true) {
-    // Move to -15 degrees
-    printf("Moving to -15 degrees\n");
-    move_steps(steps_for_30_deg, COUNTER_CLOCKWISE);
-    sleep_ms(3000);
-
-    // Move to +15 degrees
+    // Move to +15 degrees from horizontal
     printf("Moving to +15 degrees\n");
-    move_steps(steps_for_30_deg, CLOCKWISE);
-    sleep_ms(3000);
+    move_steps(steps_for_15_deg, CLOCKWISE);
+    sleep_ms(2000);
+
+    // Move back to horizontal from +15
+    printf("Returning to horizontal\n");
+    move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
+    sleep_ms(2000);
+
+    // Move to -15 degrees from horizontal
+    printf("Moving to -15 degrees\n");
+    move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
+    sleep_ms(2000);
+
+    // Move back to horizontal from -15
+    printf("Returning to horizontal\n");
+    move_steps(steps_for_15_deg, CLOCKWISE);
+    sleep_ms(500);
   }
 
   return 0;
