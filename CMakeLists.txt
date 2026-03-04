@@ -16,6 +16,7 @@ add_executable(bbb
 
 target_link_libraries(bbb
     pico_stdlib
+    hardware_pwm
 )
 
 pico_enable_stdio_usb(bbb 1)
