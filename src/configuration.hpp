@@ -10,7 +10,7 @@
 #define SDA_PIN 6
 #define SCL_PIN 7
 
-#define MOTOR_STEP_PIN 16
+#define MOTOR_STEP_PIN 18
 #define MOTOR_DIR_PIN 17
 #define STEP_ANGLE 1.80f
 
@@ -19,9 +19,7 @@
 #define MICROSTEPS 16
 #define STEPS_PER_REV 3200
 
-// time in microseconds between steps in the timer.
-// lower = faster beam movement.
-#define MOTOR_STEP_INTERVAL_US 400
+// #define MOTOR_STEP_INTERVAL_US 400
 
 #define BALL_SETPOINT_CM 15.0f
 #define PID_SAMPLE_MS 20 // matches VL53L0X timing
@@ -32,8 +30,8 @@
 
 // 1 step = 0.1125 degrees.
 // 178 steps is ~20 degree tilt.
-#define PID_LIMIT_MIN -150.0f
-#define PID_LIMIT_MAX 150.0f
+// #define PID_LIMIT_MIN -150.0f
+// #define PID_LIMIT_MAX 150.0f
 
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };
 

@@ -25,6 +25,7 @@ target_link_libraries(bbb
     pico_stdlib
     pico_multicore
     hardware_i2c
+    hardware_pwm
 )
 
 pico_enable_stdio_usb(bbb 1)

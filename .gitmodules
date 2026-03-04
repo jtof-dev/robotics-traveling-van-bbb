@@ -7,3 +7,6 @@
 [submodule "lib/pid"]
 	path = lib/pid
 	url = https://github.com/jtof-dev/pico-pid-library.git
+[submodule "lib/TMC2208"]
+	path = lib/TMC2208
+	url = https://github.com/teemuatlut/TMCStepper.git

@@ -1,35 +1,37 @@
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
-#include "hardware/timer.h"
+#include "hardware/pwm.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include <stdio.h>
+#include <math.h>
 
 #include "VL53L0X.h"
 #include "configuration.hpp"
 #include "pid.h"
 
-// thread-safe motor variables
-volatile int32_t current_step_pos = 0;
-volatile int32_t target_step_pos = 0;
-volatile bool motor_enabled = false;
-
-bool motor_step_callback(struct repeating_timer *t) {
-  if (motor_enabled && current_step_pos != target_step_pos) {
-    // Set Direction based on position error
-    if (target_step_pos > current_step_pos) {
-      gpio_put(MOTOR_DIR_PIN, CLOCKWISE);
-      current_step_pos++;
-    } else {
-      gpio_put(MOTOR_DIR_PIN, COUNTER_CLOCKWISE);
-      current_step_pos--;
+// Optimized set_speed with state management
+void set_speed(float steps_per_sec) {
+    uint slice_num = pwm_gpio_to_slice_num(MOTOR_STEP_PIN);
+    
+    if (steps_per_sec < 10.0f) { 
+        pwm_set_chan_level(slice_num, pwm_gpio_to_channel(MOTOR_STEP_PIN), 0);
+        pwm_set_enabled(slice_num, false);
+        return;
     }
 
-    gpio_put(MOTOR_STEP_PIN, 1);
-    sleep_us(2); // minimum pulse width
-    gpio_put(MOTOR_STEP_PIN, 0);
-  }
-  return true;
+    // Use a higher divider for low speeds to avoid 16-bit wrap overflow
+    // 125 divider = 1MHz clock. Wrap of 65535 = ~15Hz minimum speed.
+    float divider = 125.0f;
+    uint32_t wrap = 1000000 / steps_per_sec;
+
+    // Safety: PWM wrap is a 16-bit register (max 65535)
+    if (wrap > 65535) wrap = 65535;
+
+    pwm_set_clkdiv(slice_num, divider);
+    pwm_set_wrap(slice_num, wrap);
+    pwm_set_chan_level(slice_num, pwm_gpio_to_channel(MOTOR_STEP_PIN), wrap / 2);
+    pwm_set_enabled(slice_num, true);
 }
 
 // future core 1 touchscreen function
@@ -61,8 +63,7 @@ int main() {
   sensor.setMeasurementTimingBudget(20000);
   sensor.startContinuous(50);
 
-  gpio_init(MOTOR_STEP_PIN);
-  gpio_set_dir(MOTOR_STEP_PIN, GPIO_OUT);
+  gpio_set_function(MOTOR_STEP_PIN, GPIO_FUNC_PWM);
   gpio_init(MOTOR_DIR_PIN);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
@@ -74,14 +75,11 @@ int main() {
             DEFAULT_KD, DIRECT);
 
   myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(PID_LIMIT_MIN, PID_LIMIT_MAX); // limits in microsteps
+  // limits are now in steps/sec
+  myPID.SetOutputLimits(-1000, 1000); 
   myPID.SetSampleTime(PID_SAMPLE_MS);
 
   multicore_launch_core1(core1_entry);
-
-  struct repeating_timer timer;
-  add_repeating_timer_us(-MOTOR_STEP_INTERVAL_US, motor_step_callback, NULL,
-                         &timer);
 
   while (true) {
     if (multicore_fifo_rvalid()) {
@@ -99,14 +97,13 @@ int main() {
 
       myPID.Compute();
 
-      // the PID output is now the absolute step position (angle)
-      target_step_pos = (int32_t)control_output;
-      motor_enabled = true;
+      gpio_put(MOTOR_DIR_PIN, (control_output > 0) ? CLOCKWISE : COUNTER_CLOCKWISE);
+      set_speed(fabs(control_output));
 
-      printf("Dist: %.1f cm | Target Step: %ld | Current: %ld\n", distance,
-             target_step_pos, current_step_pos);
+      printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance,
+             control_output);
     } else {
-      target_step_pos = 0;
+      set_speed(0);
     }
 
     sleep_ms(50);
