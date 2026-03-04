@@ -8,12 +8,6 @@
 #define CLOCKWISE 1
 #define COUNTER_CLOCKWISE 0
 
-// Motor characteristics
-const float STEP_ANGLE = 1.8f;
-const int MICROSTEPS = 16;
-const int STEPS_PER_REV_FULL = 360 / STEP_ANGLE;
-const int STEPS_PER_REV_MICRO = STEPS_PER_REV_FULL * MICROSTEPS;
-
 // Speed control
 const int DELAY_US = 500; // smaller is faster
 
@@ -36,8 +30,7 @@ int main() {
   gpio_init(MOTOR_DIR_PIN);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
-  // Calculate steps for 15 degrees
-  int steps_for_15_deg = (int)((20.0f / 360.0f) * STEPS_PER_REV_MICRO);
+  int steps = 150;
 
   sleep_ms(1000);
   printf("Starting motor control...\n");
@@ -45,23 +38,23 @@ int main() {
   while (true) {
     // Move to +15 degrees from horizontal
     printf("Moving to +15 degrees\n");
-    move_steps(steps_for_15_deg, CLOCKWISE);
+    move_steps(steps, CLOCKWISE);
     sleep_ms(500);
 
-    // Move back to horizontal from +15
-    printf("Returning to horizontal\n");
-    move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
-    sleep_ms(500);
+    // // Move back to horizontal from +15
+    // printf("Returning to horizontal\n");
+    // move_steps(steps, COUNTER_CLOCKWISE);
+    // sleep_ms(500);
 
     // Move to -15 degrees from horizontal
     printf("Moving to -15 degrees\n");
-    move_steps(steps_for_15_deg, COUNTER_CLOCKWISE);
+    move_steps(steps, COUNTER_CLOCKWISE);
     sleep_ms(500);
 
-    // Move back to horizontal from -15
-    printf("Returning to horizontal\n");
-    move_steps(steps_for_15_deg, CLOCKWISE);
-    sleep_ms(500);
+    // // Move back to horizontal from -15
+    // printf("Returning to horizontal\n");
+    // move_steps(steps, CLOCKWISE);
+    // sleep_ms(500);
   }
 
   return 0;
