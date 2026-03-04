@@ -16,8 +16,8 @@
 
 // microstepping logic (TMC2208 MS1=H, MS2=H)
 // 360 / 1.8 = 200 full steps. 200 * 16 = 3200 microsteps/rev.
-#define MICROSTEPS 16
-#define STEPS_PER_REV 3200
+// #define MICROSTEPS 16
+#define STEPS_PER_REV 200
 
 // #define MOTOR_STEP_INTERVAL_US 400
 
@@ -28,10 +28,8 @@
 #define DEFAULT_KI 0.0f
 #define DEFAULT_KD 0.5f
 
-// 1 step = 0.1125 degrees.
-// 178 steps is ~20 degree tilt.
-// #define PID_LIMIT_MIN -150.0f
-// #define PID_LIMIT_MAX 150.0f
+#define PID_LIMIT_MIN -10.0f
+#define PID_LIMIT_MAX 10.0f
 
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };
 
