@@ -46,6 +46,16 @@ then build with CMAKE (or use `scripts/buildFresh.sh`):
 | **M1B**        | **B+**                | phase B       | **red**                |
 | **M2B**        | **B-**                | phase B       | **blue**               |
 
+- from left to right:
+  - GND
+  - VIO
+  - M2B
+  - M2A
+  - M1A
+  - M1B
+  - GND
+  - VM
+
 ## pi pico
 
 | **pico pin** | **label** | **connection**           | **purpose**             |
