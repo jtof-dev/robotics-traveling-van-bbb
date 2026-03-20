@@ -1,0 +1,65 @@
+#include "hardware/gpio.h"
+#include "hardware/pwm.h"
+#include "pico/stdlib.h"
+#include <stdio.h>
+
+// Pin Definitions
+#define MOTOR_STEP_PIN 17
+#define MOTOR_DIR_PIN 16
+
+// Direction Constants
+#define CLOCKWISE 1
+#define COUNTER_CLOCKWISE 0
+
+// Lower frequency = Slower rotation.
+// Try values between 100 (very slow) and 1000 (moderate).
+const float PWM_FREQUENCY = 1000.0f;
+
+int main() {
+  stdio_init_all();
+
+  // --- GPIO Initialization for Direction Pin ---
+  gpio_init(MOTOR_DIR_PIN);
+  gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
+
+  // Set continuous direction
+  gpio_put(MOTOR_DIR_PIN, CLOCKWISE);
+
+  // --- PWM Initialization for Step Pin ---
+  // Ensure we are using the pin defined in MOTOR_STEP_PIN
+  gpio_set_function(MOTOR_STEP_PIN, GPIO_FUNC_PWM);
+
+  uint slice_num = pwm_gpio_to_slice_num(MOTOR_STEP_PIN);
+  uint chan = pwm_gpio_to_channel(MOTOR_STEP_PIN);
+
+  pwm_config config = pwm_get_default_config();
+
+  // The system clock is typically 125MHz.
+  // A divider of 125.0f gives a 1MHz clock for the PWM counter.
+  pwm_config_set_clkdiv(&config, 125.0f);
+
+  // Set the wrap value to set the PWM frequency.
+  // wrap = (1,000,000 / PWM_FREQUENCY) - 1
+  uint16_t wrap = (uint16_t)(1000000 / PWM_FREQUENCY) - 1;
+  pwm_config_set_wrap(&config, wrap);
+
+  // Set a 50% duty cycle (the TMC2208 triggers on the rising edge)
+  pwm_set_chan_level(slice_num, chan, (wrap + 1) / 2);
+
+  // Initialize and enable PWM immediately for continuous movement
+  pwm_init(slice_num, &config, true);
+
+  printf("Motor started: Continuous rotation at %.2f Hz\n", PWM_FREQUENCY);
+
+  // Keep the program alive
+  while (true) {
+    tight_loop_contents();
+    // gpio_put(MOTOR_STEP_PIN, 1);
+    // sleep_ms(100); // Very long pulse
+    // gpio_put(MOTOR_STEP_PIN, 0);
+    // sleep_ms(100);
+    // printf("Pulse sent...\n");
+  }
+
+  return 0;
+}
