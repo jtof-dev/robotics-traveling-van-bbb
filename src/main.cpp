@@ -10,6 +10,27 @@
 #include "configuration.hpp"
 #include "pid.h"
 
+// added code for magnetic encoder
+volatile int position = 0;
+volatile bool last_state_a = false;
+
+// ISR for encoder
+void encoder_callback(uint gpio, uint32_t events) {
+    if (gpio == ENCODER_PIN_A) {
+        bool state_a = gpio_get(ENCODER_PIN_A);
+        bool state_b = gpio_get(ENCODER_PIN_B);
+
+        if (state_a != last_state_a) {
+            if (state_a != state_b) {
+                position++; // forward
+            } else {
+                position--; // reverse
+            }
+            last_state_a = state_a;
+        }
+    }
+}
+
 /*
 
 // Optimized set_speed with state management
@@ -118,6 +139,20 @@ int main() {
   gpio_set_dir(MOTOR_STEP_PIN, GPIO_OUT);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
+  // initialize encoder pins and enable pull-ups
+  gpio_init(ENCODER_PIN_A);
+  gpio_set_dir(ENCODER_PIN_A, GPIO_IN);
+  gpio_pull_up(ENCODER_PIN_A);
+
+  gpio_init(ENCODER_PIN_B);
+  gpio_set_dir(ENCODER_PIN_B, GPIO_IN);
+  gpio_pull_up(ENCODER_PIN_B);
+
+  last_state_a = gpio_get(ENCODER_PIN_A);
+
+  // attach interrupt to PIN_A for both rising and falling edges
+  gpio_set_irq_enabled_with_callback(ENCODER_PIN_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_callback);
+
   float distance = BALL_SETPOINT_CM;
   float old_distance = 0;
   float speed = 0;
@@ -155,14 +190,14 @@ int main() {
       old_distance = distance;
       distance = (float)mm / 10.0f; // mm to cm
 
-      speed = (distance - old_distance) / 10; // In units of mm/ms
+      speed = (distance - old_distance) / 10; // mm/ms
       myPID.Compute();
 
 	current_angle = set_angle( 0.3*(set_point - distance), MOTOR_STEP_PIN, MOTOR_DIR_PIN);
 	sleep_ms(20);
 
      
-      printf("Dist: %.1f cm | Desired Angle: %.1f degrees | Current angle: %f\n", distance, control_output, current_angle * 0.225);
+      printf("Dist: %.1f cm | Desired Angle: %.1f degrees | Current angle: %f | Encoder: %d\n", distance, control_output, current_angle * 0.225, position);
     } else {
       //set_speed(0);
     }

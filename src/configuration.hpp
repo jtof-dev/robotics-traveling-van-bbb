@@ -10,6 +10,9 @@
 #define SDA_PIN 6
 #define SCL_PIN 7
 
+#define ENCODER_PIN_A 2
+#define ENCODER_PIN_B 3
+
 #define MOTOR_STEP_PIN 16
 #define MOTOR_DIR_PIN 17
 #define STEP_ANGLE 1.80f
