@@ -10,7 +10,7 @@
 #define SDA_PIN 6
 #define SCL_PIN 7
 
-#define MOTOR_STEP_PIN 18
+#define MOTOR_STEP_PIN 16
 #define MOTOR_DIR_PIN 17
 #define STEP_ANGLE 1.80f
 
@@ -21,15 +21,15 @@
 
 // #define MOTOR_STEP_INTERVAL_US 400
 
-#define BALL_SETPOINT_CM 15.0f
+#define BALL_SETPOINT_CM 17.0f
 #define PID_SAMPLE_MS 20 // matches VL53L0X timing
 
-#define DEFAULT_KP 5.0f
-#define DEFAULT_KI 0.0f
-#define DEFAULT_KD 0.5f
+#define DEFAULT_KP 0.50f
+#define DEFAULT_KI 0.00f
+#define DEFAULT_KD 0.00f
 
-#define PID_LIMIT_MIN -10.0f
-#define PID_LIMIT_MAX 10.0f
+#define PID_LIMIT_MIN -3.5f
+#define PID_LIMIT_MAX 3.5f
 
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };
 
