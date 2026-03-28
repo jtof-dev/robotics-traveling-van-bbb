@@ -41,6 +41,163 @@ void core1_entry() {
     tight_loop_contents();
   }
 }
+<<<<<<< Updated upstream
+=======
+
+class MOTOR {
+	public:
+		MOTOR(int step_pin, int dir_pin) {
+			set_motor_pins(step_pin, dir_pin);
+
+		}
+
+		void set_angle(float angle) {
+
+
+			int new_angle = angle / 0.225;
+
+			if (abs(new_angle - current_angle) > 1) {
+				change_angle(angle - current_angle);
+				current_angle = current_angle + (new_angle - current_angle);
+
+			}
+
+
+		}
+
+		void set_motor_pins(int step_pin, int dir_pin) {
+			STEP_PIN = step_pin;
+			DIR_PIN = dir_pin;
+		}
+
+		float get_current_angle() {
+			return current_angle * angle_conversion;
+		}
+
+		void set_pulsewidth_us(uint us) {
+			pulsewidth = 1000;
+
+		}
+
+
+	private:
+		int STEP_PIN; 
+		int DIR_PIN;
+		int pulsewidth = 1000;
+		int current_angle = 0;
+		const float angle_conversion = 1.8/8; // 1.8 steps with 8 microsteps in between
+
+		void change_angle(int angle) {
+			int new_angle = abs(angle);
+			int counter = 0;
+
+
+			if (angle < 0) {
+				gpio_put(DIR_PIN, CLOCKWISE);
+			} else {
+				gpio_put(DIR_PIN, COUNTER_CLOCKWISE);
+			}
+
+			while (counter < new_angle) {
+				gpio_put(STEP_PIN, 1);
+				sleep_us(pulsewidth / 2);
+				gpio_put(STEP_PIN, 0);
+				sleep_us(pulsewidth / 2);
+
+				counter++;
+
+			}
+		}
+};
+>>>>>>> Stashed changes
+
+class MOTOR {
+	public:
+		MOTOR(int step_pin, int dir_pin) {
+			set_motor_pins(step_pin, dir_pin);
+
+		}
+
+		void set_angle(float angle) {
+
+
+			int new_angle = angle / 0.225;
+
+			if (abs(new_angle - current_angle) > 1) {
+				change_angle(angle - current_angle);
+				current_angle = current_angle + (new_angle - current_angle);
+
+			}
+
+
+		}
+
+		void set_motor_pins(int step_pin, int dir_pin) {
+			STEP_PIN = step_pin;
+			DIR_PIN = dir_pin;
+		}
+
+		float get_current_angle() {
+			return current_angle * angle_conversion;
+		}
+
+		void set_pulsewidth_us(uint us) {
+			pulsewidth = 1000;
+
+		}
+
+
+		void change_angle(int angle) {
+			int new_angle = abs(angle);
+			int counter = 0;
+
+
+			if (angle < 0) {
+				gpio_put(DIR_PIN, CLOCKWISE);
+			} else {
+				gpio_put(DIR_PIN, COUNTER_CLOCKWISE);
+			}
+
+			while (counter < new_angle) {
+				gpio_put(STEP_PIN, 1);
+				sleep_us(pulsewidth / 2);
+				gpio_put(STEP_PIN, 0);
+				sleep_us(pulsewidth / 2);
+
+				counter++;
+
+			}
+		}
+	private:
+		int STEP_PIN; 
+		int DIR_PIN;
+		int pulsewidth = 1000;
+		int current_angle = 0;
+		const float angle_conversion = 1.8/8; // 1.8 steps with 8 microsteps in between
+
+		/*
+		void change_angle(int angle) {
+			int new_angle = abs(angle);
+			int counter = 0;
+
+
+			if (angle < 0) {
+				gpio_put(DIR_PIN, CLOCKWISE);
+			} else {
+				gpio_put(DIR_PIN, COUNTER_CLOCKWISE);
+			}
+
+			while (counter < new_angle) {
+				gpio_put(STEP_PIN, 1);
+				sleep_us(pulsewidth / 2);
+				gpio_put(STEP_PIN, 0);
+				sleep_us(pulsewidth / 2);
+
+				counter++;
+
+			}
+		} */
+};
 
 int main() {
   stdio_init_all();
@@ -68,6 +225,14 @@ int main() {
   gpio_init(MOTOR_DIR_PIN);
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+  // PID setup
+>>>>>>> Stashed changes
+=======
+  // PID setup
+>>>>>>> Stashed changes
   float distance = BALL_SETPOINT_CM;
   float set_point = BALL_SETPOINT_CM;
   float control_output = 0.0f;
@@ -80,7 +245,20 @@ int main() {
   myPID.SetOutputLimits(PID_LIMIT_MIN, PID_LIMIT_MAX);
   myPID.SetSampleTime(PID_SAMPLE_MS);
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   multicore_launch_core1(core1_entry);
+=======
+=======
+>>>>>>> Stashed changes
+  // Motor Setup
+  MOTOR motor(MOTOR_STEP_PIN, MOTOR_DIR_PIN);
+
+  //multicore_launch_core1(core1_entry);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
   while (true) {
     if (multicore_fifo_rvalid()) {
@@ -97,15 +275,44 @@ int main() {
       distance = (float)mm / 10.0f; // mm to cm
 
       myPID.Compute();
+<<<<<<< Updated upstream
 
-      gpio_put(MOTOR_DIR_PIN,
-               (control_output > 0) ? CLOCKWISE : COUNTER_CLOCKWISE);
-      set_speed(fabs(control_output));
+      int pulsewidth = 2000;
+      while (1) {
+	      gpio_put(MOTOR_STEP_PIN, 1);
+	      sleep_us(pulsewidth / 2);
+	      gpio_put(MOTOR_STEP_PIN, 0);
+	      sleep_us(pulsewidth / 2);
+
+      }
+
+
 
       printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance, control_output);
+<<<<<<< Updated upstream
     } else {
       set_speed(0);
+=======
+
+      int pulsewidth = 2000;
+      while (1) {
+	      gpio_put(MOTOR_STEP_PIN, 1);
+	      sleep_us(pulsewidth / 2);
+	      gpio_put(MOTOR_STEP_PIN, 0);
+	      sleep_us(pulsewidth / 2);
+
+      }
+
+
+
+      printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance, control_output);
+
+>>>>>>> Stashed changes
+=======
+
+>>>>>>> Stashed changes
     }
+    
 
     sleep_ms(50);
   }
