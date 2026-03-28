@@ -2,6 +2,7 @@
 
 # ==========================================
 # DEPENDENCY CONFIGURATION
+# script written by google gemini
 # Format: "local/folder/path | https://github.com/... | optional_branch"
 # ==========================================
 LIBS=(
@@ -9,6 +10,8 @@ LIBS=(
     "lib/VL53L0X  | https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp.git"
     "lib/pid | https://github.com/jtof-dev/pico-pid-library.git"
 )
+
+cd ../
 
 for entry in "${LIBS[@]}"; do
     # Split the string by the pipe symbol "|"
@@ -53,3 +56,4 @@ echo "Fetching all nested dependencies..."
 echo "----------------------------------------"
 git submodule update --init --recursive
 
+cd scripts/
