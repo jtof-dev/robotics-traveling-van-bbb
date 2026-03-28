@@ -2,22 +2,22 @@
 #define CONFIGURATION_HPP
 
 // ToF sensor
-// #define I2C_PORT i2c0
-// #define SDA_PIN 4
-// #define SCL_PIN 5
+#define I2C_PORT i2c0
+#define SDA_PIN 4
+#define SCL_PIN 5
 
-#define I2C_PORT i2c1
-#define SDA_PIN 6
-#define SCL_PIN 7
+// #define I2C_PORT i2c1
+// #define SDA_PIN 6
+// #define SCL_PIN 7
 
-#define MOTOR_STEP_PIN 18
+#define MOTOR_STEP_PIN 16
 #define MOTOR_DIR_PIN 17
 #define STEP_ANGLE 1.80f
 
 // microstepping logic (TMC2208 MS1=H, MS2=H)
 // 360 / 1.8 = 200 full steps. 200 * 16 = 3200 microsteps/rev.
 // #define MICROSTEPS 16
-#define STEPS_PER_REV 200
+#define STEPS_PER_REV 1800
 
 // #define MOTOR_STEP_INTERVAL_US 400
 
