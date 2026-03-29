@@ -12,6 +12,7 @@ pico_sdk_init()
 
 add_executable(bbb
     src/main.cpp
+    src/motor.cpp
     lib/pid/pid.cpp
     lib/VL53L0X/VL53L0X.cpp
 )
