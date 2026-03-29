@@ -51,6 +51,15 @@ class MOTOR {
 
 		}
 
+		void reset_beam_angle() {
+			// Changing the angle by 120 guarentees that the beam will be on the edge
+			change_angle(60 / angle_conversion);
+			sleep_ms(1000);
+			change_angle(-30/ angle_conversion);
+			sleep_ms(1000);
+			current_angle = 0;
+		}
+
 
 	private:
 		int STEP_PIN; 
@@ -69,6 +78,7 @@ class MOTOR {
 			} else {
 				gpio_put(DIR_PIN, COUNTER_CLOCKWISE);
 			}
+			sleep_us(10);
 
 			while (counter < new_angle) {
 				gpio_put(STEP_PIN, 1);
@@ -129,6 +139,7 @@ int main() {
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
   MOTOR motor(MOTOR_STEP_PIN, MOTOR_DIR_PIN);
+  motor.reset_beam_angle();
 
 
   //multicore_launch_core1(core1_entry);
@@ -156,6 +167,7 @@ int main() {
     
 
 
+    sleep_ms(50);
   }
 
   return 0;

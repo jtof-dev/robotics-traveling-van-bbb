@@ -21,12 +21,12 @@
 
 // #define MOTOR_STEP_INTERVAL_US 400
 
-#define BALL_SETPOINT_CM 15.0f
+#define BALL_SETPOINT_CM 17.0f
 #define PID_SAMPLE_MS 20 // matches VL53L0X timing
 
-#define DEFAULT_KP 0.8f
-#define DEFAULT_KI 0.0f
-#define DEFAULT_KD 0.0f
+#define DEFAULT_KP 0.75f
+#define DEFAULT_KI 0.30f
+#define DEFAULT_KD 0.05f
 
 #define PID_LIMIT_MIN -5.0f
 #define PID_LIMIT_MAX 5.0f
