@@ -1,5 +1,47 @@
 # ball and beam robot
 
+```ascii flowchart
+                              ┌─────────┐
+                              │         │
+                              │ initial │
+                              │  boot   │
+                              │         │
+                              └────┬────┘
+                                   │
+            ┌───────────────┐      │      ┌─────────────┐
+            │               │      │      │             │
+            │ reset beam to │◄─────┼─────►│ set up pins │
+            │    center     │      │      │ and sensor  │
+            │               │      │      │             │
+            └───────────────┘      │      └─────────────┘
+                                   ▼
+                              ┌────────┐
+                              │        │
+                              │ main() │
+                              │        │
+                              └────┬───┘
+                                   │
+                                   │
+                                   │
+                                   ▼
+  ┌────────────────┐      ┌──────────────────┐      ┌───────────────┐
+  │                │      │                  │      │               │
+  │  send desired  ├─────►│ write a frame to ├─────►│ read time of  │
+  │ angle to motor │      │ the touchscreen  │      │ flight sensor │
+  │                │      │                  │      │               │
+  └────────────────┘      └──────────────────┘      └────────────┬──┘
+     ▲                                                           │
+     │                                                           │
+     │                                                           │
+     │                                                           │
+     │                                                           │
+     │    ┌─────────────────────┐      ┌─────────────────────┐   │
+     │    │                     │      │                     │   │
+     └────┤ adjust output value │◄─────┤ run PID calculation │◄──┘
+          │                     │      │                     │
+          └─────────────────────┘      └─────────────────────┘
+```
+
 ## building
 
 - first, fetch all submodules with `git submodule update --init --recursive`
