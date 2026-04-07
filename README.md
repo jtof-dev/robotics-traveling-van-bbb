@@ -42,11 +42,13 @@
           └─────────────────────┘      └─────────────────────┘
 ```
 
+# software
+
 ## building
 
-- first, fetch all submodules with `git submodule update --init --recursive`
+- first, fetch all submodules with `git submodule update --init --recursive` or delete and re-clone all submodules with `scripts/submoduleSetup.sh`
 
-then build with CMAKE (or use `scripts/buildFresh.sh`):
+then build with CMAKE (or with `scripts/buildFresh.sh`):
 
 ```
     mdkir build
@@ -55,7 +57,7 @@ then build with CMAKE (or use `scripts/buildFresh.sh`):
     make
 ```
 
-- then upload the `build/bbb.uf2` file, upload to the board using `upload.sh`
+(note: updating configurations in `src/configuration.hpp` does not trigger a proper re-build, so only running `make` will often not be enough)
 
 # pins
 
