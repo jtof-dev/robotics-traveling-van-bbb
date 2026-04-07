@@ -175,10 +175,10 @@ or, install `matplotlib` and run normally
 
 - assisted with the electronics design and assembly
 
-### [freddy rivera]()
+### [freddy rivera](https://www.linkedin.com/in/freddy-rivera-791513268/)
 
 - developed the CAD model and helped with assembly
 
-### [florence fasugbe]()
+### [florence fasugbe](https://www.linkedin.com/in/florence-fasugbe/)
 
 - developed the CAD model and helped with assembly
