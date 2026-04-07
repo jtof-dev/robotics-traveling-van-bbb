@@ -1,1 +1,3 @@
 build/
+sims/.venv
+sims/.python_version
