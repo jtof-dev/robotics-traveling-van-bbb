@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# move out of scripts/
-cd ..
+pwd=$(pwd)
+repoRoot=$(git rev-parse --show-toplevel)
+
+cd "$repoRoot"
 
 sudo rm -rf build/
 
@@ -11,7 +13,6 @@ cd build
 
 cmake ..
 
-make
+make -j12
 
-cd ../scripts
-
+cd "$pwd" 
