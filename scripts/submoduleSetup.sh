@@ -11,7 +11,10 @@ LIBS=(
     "lib/tft_espi | https://github.com/Bodmer/TFT_eSPI.git"
 )
 
-cd ../
+pwd=$(pwd)
+repoRoot=$(git rev-parse --show-toplevel)
+
+cd "$repoRoot"
 
 for entry in "${LIBS[@]}"; do
     # Split the string by the pipe symbol "|"
@@ -56,4 +59,4 @@ echo "Fetching all nested dependencies..."
 echo "----------------------------------------"
 git submodule update --init --recursive
 
-cd scripts/
+cd "$pwd"
