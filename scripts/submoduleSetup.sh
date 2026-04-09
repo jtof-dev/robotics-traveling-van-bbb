@@ -6,9 +6,9 @@
 # Format: "local/folder/path | https://github.com/... | optional_branch"
 # ==========================================
 LIBS=(
-    "lib/pico-sdk | https://github.com/raspberrypi/pico-sdk.git"
     "lib/VL53L0X  | https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp.git"
     "lib/pid | https://github.com/jtof-dev/pico-pid-library.git"
+    "lib/tft_espi | https://github.com/Bodmer/TFT_eSPI.git"
 )
 
 cd ../

@@ -1,12 +1,9 @@
-[submodule "lib/pico-sdk"]
-	path = lib/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
 [submodule "lib/VL53L0X"]
 	path = lib/VL53L0X
 	url = https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp.git
 [submodule "lib/pid"]
 	path = lib/pid
 	url = https://github.com/jtof-dev/pico-pid-library.git
-[submodule "lib/TMC2208"]
-	path = lib/TMC2208
-	url = https://github.com/teemuatlut/TMCStepper.git
+[submodule "lib/tft_espi"]
+	path = lib/tft_espi
+	url = https://github.com/Bodmer/TFT_eSPI.git
