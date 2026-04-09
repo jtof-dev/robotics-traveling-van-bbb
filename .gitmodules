@@ -4,6 +4,6 @@
 [submodule "lib/pid"]
 	path = lib/pid
 	url = https://github.com/jtof-dev/pico-pid-library.git
-[submodule "lib/tft_espi"]
-	path = lib/tft_espi
+[submodule "lib/TFT_eSPI"]
+	path = lib/TFT_eSPI
 	url = https://github.com/Bodmer/TFT_eSPI.git
