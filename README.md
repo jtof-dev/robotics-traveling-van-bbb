@@ -115,6 +115,8 @@ or, install `matplotlib` and run normally
 
 # hardware
 
+![circuit diagram](./datasheets/bbb_circuit_diagram.webp)
+
 ## parts list
 
 - [NEMA 17](https://a.co/d/05dRpuKu) stepper motor
