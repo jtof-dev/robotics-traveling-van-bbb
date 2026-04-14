@@ -175,28 +175,37 @@ or, install `matplotlib` and run normally
 | XSHUT   | --                  | shutdown     | leave disconnected or pull high |
 | GP101   | --                  | interrupt    | not required for basic ranging  |
 
+# todo
+
+- make a robust reset that doesn't involve turning on and off
+- detect absense of ball 
+- detect ball nonsense (i.e its stuck on one side)
+
+- implement the screen
+- make the set point controllable through screen
+
 # contributors
 
-### [kyle draper](https://github.com/Kdra-bit)
+### [Kyle Draper](https://github.com/Kdra-bit)
 
 - developed the electronics and balancing software for the ball and beam balance robot
 
-### [andy babcock](https://github.com/jtof-dev)
+### [Andy Babcock](https://github.com/jtof-dev)
 
 - assisted with the balancing software and assembly
 
-### [kaden zaremba](https://github.com/kadenisuhhh)
+### [Kaden Zaremba](https://github.com/kadenisuhhh)
 
 - developed the touchscreen software
 
-### [david jimenez]()
+### [David Jimenez]()
 
 - assisted with the electronics design and assembly
 
-### [freddy rivera](https://www.linkedin.com/in/freddy-rivera-791513268/)
+### [Freddy Rivera](https://www.linkedin.com/in/freddy-rivera-791513268/)
 
 - developed the CAD model and helped with assembly
 
-### [florence fasugbe](https://www.linkedin.com/in/florence-fasugbe/)
+### [Florence Fasugbe](https://www.linkedin.com/in/florence-fasugbe/)
 
 - developed the CAD model and helped with assembly
