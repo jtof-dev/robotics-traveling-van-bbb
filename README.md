@@ -1,5 +1,14 @@
 # ball and beam robot
 
+## screen branch notes
+
+- small rewrite to `main.cpp` --> `src.ino`, because the project gets pre-compiled with `arduino-cli` and is then translated into pico-compatible code
+    - now in `src.ino`, core 0 uses `setup()` and `loop()`; core 1 uses `setup1()` and `loop1()`
+    - all `TFT_eSPI` user configuraiton can be done using flags in `CMakeLists.txt` without a local user config file
+    - make sure to install two `arduino-cli` lib dependencies before trying to build!
+
+---
+
 everything needed to power a ball and beam balance robot (bbb) using a stepper motor, including the code, parts lists, CAD model, and instructions. when you're done, check out our [inverted pendulum robot](https://github.com/jtof-dev/robotics-traveling-van-ipr) and our [website](https://sce.nau.edu/capstone/projects/EE/2026/RoboVan/)
 
 ```ascii flowchart
@@ -60,6 +69,13 @@ everything needed to power a ball and beam balance robot (bbb) using a stepper m
 
 - first, fetch all submodules with `git submodule update --init --recursive` or delete and re-clone all submodules with `scripts/submoduleSetup.sh`
 
+- second, install two `arduino-cli` dependencies that get used in `CMakeLists.txt`:
+
+```bash
+arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+```
+
 then build with CMAKE (or with `scripts/buildFresh.sh`):
 
 ```bash
@@ -98,6 +114,8 @@ uv run main.py
 or, install `matplotlib` and run normally
 
 # hardware
+
+![circuit diagram](./datasheets/bbb_circuit_diagram.webp)
 
 ## parts list
 

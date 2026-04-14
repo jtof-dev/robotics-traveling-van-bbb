@@ -15,4 +15,4 @@ cmake ..
 
 make -j12
 
-cd "$pwd" 
+cd "$pwd"

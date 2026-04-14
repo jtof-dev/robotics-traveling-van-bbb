@@ -1,35 +1,49 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.20)
+project(bbb CXX)
 
-set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}lib/pico-sdk)
-include(lib/pico-sdk/pico_sdk_init.cmake)
+find_program(ARDUINO_CLI arduino-cli REQUIRED)
 
-project(bbb C CXX ASM)
+set(SKETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/arduino_build)
+set(UF2_OUTPUT ${OUTPUT_DIR}/src.ino.uf2)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(TFT_FLAG_LIST
+    "-DUSER_SETUP_LOADED=1"
+    "-DST7796_DRIVER=1"
+    "-DTFT_MISO=16"
+    "-DTFT_MOSI=19"
+    "-DTFT_SCLK=18"
+    "-DTFT_CS=20"
+    "-DTFT_DC=22"
+    "-DTFT_RST=21"
+    "-DLOAD_GLCD=1"
+    "-DLOAD_FONT2=1"
+    "-DLOAD_FONT4=1"
+    "-DLOAD_FONT6=1"
+    "-DLOAD_FONT7=1"
+    "-DLOAD_FONT8=1"
+    "-DLOAD_GFXFF=1"
+    "-DSMOOTH_FONT=1"
+    "-DTFT_SPI_PORT=0"
+    "-DSPI_FREQUENCY=20000000"
+    "-DSPI_READ_FREQUENCY=20000000"
+    "-DSPI_TOUCH_FREQUENCY=2500000"
+)
+string(JOIN " " TFT_DEFINES ${TFT_FLAG_LIST})
 
-pico_sdk_init()
-
-add_executable(bbb
-    src/main.cpp
-    src/motor.cpp
-    lib/pid/pid.cpp
-    lib/VL53L0X/VL53L0X.cpp
+add_custom_command(
+    OUTPUT ${UF2_OUTPUT}
+    COMMAND ${ARDUINO_CLI} compile 
+            --fqbn rp2040:rp2040:rpipico 
+            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/TFT_eSPI
+            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/pid        # Automatically pulls in your PID library
+            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/VL53L0X    # Automatically pulls in your TOF library
+            --output-dir ${OUTPUT_DIR}
+            --build-property "build.extra_flags=${TFT_DEFINES}"
+            ${SKETCH_DIR}
+    DEPENDS ${SKETCH_DIR}/src.ino
+    COMMENT "delegating bbb firmware compilation to arduino-cli..."
 )
 
-target_include_directories(bbb PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/lib/pid
-    ${CMAKE_CURRENT_LIST_DIR}/lib/VL53L0X
-)
-
-target_link_libraries(bbb
-    pico_stdlib
-    pico_multicore
-    hardware_i2c
-    hardware_pwm
-)
-
-pico_enable_stdio_usb(bbb 1)
-pico_enable_stdio_uart(bbb 1)
-
-pico_add_extra_outputs(bbb)
+# 5. Create the main target that ties it all together
+add_custom_target(bbb ALL DEPENDS ${UF2_OUTPUT})
