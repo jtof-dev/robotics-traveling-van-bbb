@@ -159,12 +159,12 @@ or, install `matplotlib` and run normally
 
 # todo
 
-[ ] make a robust reset that doesn't involve turning on and off
-[ ] detect absense of ball 
-[ ] detect ball nonsense (i.e its stuck on one side)
+-[ ] make a robust reset that doesn't involve turning on and off
+-[ ] detect absense of ball 
+-[ ] detect ball nonsense (i.e its stuck on one side)
 
-[ ] implement the screen
-  [ ] make the set point controllable
+-[ ] implement the screen
+  -[ ] make the set point controllable
 
 # contributors
 
