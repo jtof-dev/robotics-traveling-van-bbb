@@ -65,11 +65,13 @@ everything needed to power a ball and beam balance robot (bbb) using a stepper m
 
 # software
 
+because there are no good screen libraries written for the pi pico, we are instead using one written for arduino, and then compiling a mixture of 
+
 ## building
 
 - first, fetch all submodules with `git submodule update --init --recursive` or delete and re-clone all submodules with `scripts/submoduleSetup.sh`
 
-- second, install two `arduino-cli` dependencies that get used in `CMakeLists.txt`:
+- second, install two `arduino-cli` (and `arduino-cli` if needed) dependencies that get used in `CMakeLists.txt`:
 
 ```bash
 arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
@@ -85,7 +87,7 @@ then build with CMAKE (or with `scripts/buildFresh.sh`):
     make
 ```
 
-(note: updating configurations in `src/configuration.hpp` does not trigger a proper re-build, so only running `make` will often not be enough)
+(note: updating configurations in `src/configuration.hpp` does not trigger a proper re-build, so only running `make` will often not be enough. instead re-run all of the commands or use `scripts/buildFresh.sh`)
 
 ## uploading
 
@@ -97,8 +99,8 @@ picotool load -f -x flash.uf2
 
 ## submodules
 
+- [bodmer/TFT_eSPI](https://github.com/Bodmer/TFT_espi)
 - [raspberrypi/pico-sdk](https://github.com/raspberrypi/pico-sdk)
-- [jtof-dev/pico-pid-library](https://github.com/jtof-dev/pico-pid-library)
 - [yspreen/VL53L0X-driver-pico-sdk-cpp](https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp)
 
 ## sims
@@ -177,12 +179,13 @@ or, install `matplotlib` and run normally
 
 # todo
 
-- make a robust reset that doesn't involve turning on and off
-- detect absense of ball 
-- detect ball nonsense (i.e its stuck on one side)
-
-- implement the screen
-- make the set point controllable through screen
+- [ ] make a robust reset that doesn't involve turning on and off
+- [ ] detect absense of ball 
+  - with no ball, its 29-30cm
+- [ ] detect ball nonsense (i.e its stuck on one side)
+  - ~26cm when ball is at far end, 5cm at close end
+- [ ] make the set point controllable through screen
+- [x] implement the screen
 
 # contributors
 

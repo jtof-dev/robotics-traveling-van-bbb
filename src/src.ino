@@ -102,14 +102,39 @@ void loop1() {
   if (!sensor->timeoutOccurred() && mm < 1200) {
     distance_val = (float)mm / 10.0f; // mm to cm
     
-    myPID->Compute();
-    motor->set_angle(control_output);
+    // ball checks
+    bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
+    bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
+
+    if (ball_absent || ball_stuck) {
+      // STOP WORKING: ball is missing or stuck at the ends
+      if (myPID->GetMode() == AUTOMATIC) {
+        myPID->SetMode(MANUAL);   // turn off PID to prevent I-term windup
+        control_output = 0.0f;    // set target angle to 0 (flat/neutral)
+        motor->set_angle(control_output);
+      }
+      
+      if (ball_absent) {
+        Serial.printf("ERR: No Ball Detected (%.1f cm)\n", distance_val);
+      } else {
+        Serial.printf("ERR: Ball Stuck/Out of bounds (%.1f cm)\n", distance_val);
+      }
+
+    } else {
+      // NORMAL OPERATION: ball is within valid bounds
+      if (myPID->GetMode() != AUTOMATIC) {
+        myPID->SetMode(AUTOMATIC); // turn PID back on if it was disabled
+      }
+
+      myPID->Compute();
+      motor->set_angle(control_output);
+      
+      Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
+    }
 
     // push the newest calculated values out to the shared variables for core 0
     current_distance = distance_val;
     current_speed = control_output;
-    
-    Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
   }
 
   delay(50);

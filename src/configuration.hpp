@@ -31,6 +31,10 @@
 #define PID_LIMIT_MIN -5.0f
 #define PID_LIMIT_MAX 5.0f
 
+#define BALL_MIN_DIST_CM 5.0f     // close end limit (stuck)
+#define BALL_MAX_DIST_CM 26.0f    // far end limit (stuck)
+#define BALL_ABSENT_DIST_CM 28.5f // no ball present threshold (29-30cm)
+
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };
 
 #endif // CONFIGURATION_HPP

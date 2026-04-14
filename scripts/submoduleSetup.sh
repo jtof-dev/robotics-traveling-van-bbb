@@ -8,7 +8,7 @@
 LIBS=(
     "lib/VL53L0X  | https://github.com/yspreen/VL53L0X-driver-pico-sdk-cpp.git"
     "lib/pid | https://github.com/jtof-dev/pico-pid-library.git"
-    "lib/tft_espi | https://github.com/Bodmer/TFT_eSPI.git"
+    "lib/TFT_eSPI | https://github.com/Bodmer/TFT_eSPI.git"
 )
 
 pwd=$(pwd)
