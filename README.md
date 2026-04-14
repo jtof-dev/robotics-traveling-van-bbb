@@ -180,11 +180,9 @@ or, install `matplotlib` and run normally
 # todo
 
 - [ ] make a robust reset that doesn't involve turning on and off
-- [ ] detect absense of ball 
-  - with no ball, its 29-30cm
-- [ ] detect ball nonsense (i.e its stuck on one side)
-  - ~26cm when ball is at far end, 5cm at close end
 - [ ] make the set point controllable through screen
+- [x] detect ball nonsense (i.e its stuck on one side)
+- [x] detect absense of ball 
 - [x] implement the screen
 
 # contributors

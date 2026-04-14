@@ -1,3 +1,3 @@
 #!/bin/bash
 
-picotool load -f -x ../build/bbb.uf2
+picotool load -f -x ../build/arduino_build/src.ino.uf2
