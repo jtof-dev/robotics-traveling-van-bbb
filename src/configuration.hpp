@@ -31,9 +31,19 @@
 #define PID_LIMIT_MIN -5.0f
 #define PID_LIMIT_MAX 5.0f
 
-#define BALL_MIN_DIST_CM 5.0f     // close end limit (stuck)
-#define BALL_MAX_DIST_CM 26.0f    // far end limit (stuck)
-#define BALL_ABSENT_DIST_CM 28.5f // no ball present threshold (29-30cm)
+#define BALL_MIN_DIST_CM 5.0f
+#define BALL_MAX_DIST_CM 26.0f
+#define BALL_ABSENT_DIST_CM 28.5f
+
+#define BALL_RESUME_MIN_CM 13.0f
+#define BALL_RESUME_MAX_CM 19.0f
+
+// touch screen pins i2c1
+#define TOUCH_SDA 2
+#define TOUCH_SCL 3
+#define TOUCH_RST 21
+#define TOUCH_INT 22
+#define FT6336U_ADDR 0x38
 
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };
 

@@ -22,15 +22,26 @@ void MOTOR::set_motor_pins(int step_pin, int dir_pin) {
 
 float MOTOR::get_current_angle() { return current_angle * angle_conversion; }
 
-void MOTOR::set_pulsewidth_us(uint us) { pulsewidth = 1000; }
+// void MOTOR::set_pulsewidth_us(uint us) { pulsewidth = 1000; }
+void MOTOR::set_pulsewidth_us(uint us) { pulsewidth = us; }
 
 void MOTOR::reset_beam_angle() {
+  // save the normal balancing speed
+  uint original_pulsewidth = pulsewidth;
+
+  // set a slower speed for the reset routine
+  pulsewidth = 3000; // larger is slower
+
+  // run the reset movements
   // changing the angle by 120 guarantees that the beam will be on the edge
   change_angle(60 / angle_conversion);
   sleep_ms(1000);
   change_angle(-30 / angle_conversion);
   sleep_ms(1000);
   current_angle = 0;
+
+  // restore the fast speed so the PID loop works properly afterwards
+  pulsewidth = original_pulsewidth;
 }
 
 void MOTOR::change_angle(int angle) {

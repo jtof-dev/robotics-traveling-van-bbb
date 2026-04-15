@@ -10,6 +10,7 @@
 #include "pid.h"
 #include "motor.hpp"
 #include "screen.hpp"
+#include "touch.hpp"
 
 // shared volatile variables to communicate between loops
 volatile float current_distance = 0.0f;
@@ -24,21 +25,27 @@ PID* myPID;
 VL53L0X* sensor;
 MOTOR* motor;
 
-// core 0: touchscreen UI
+// core 0: touchscreen ui
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   
   initScreen();
+  initTouch(); // <-- initialize the FT6336U
 }
 
 void loop() {
-  // this is mostly placeholder UI to show that the screen is capable of working in real-time
   uint32_t loopStart = millis();
 
+  // check for touch input
+  uint16_t touchX, touchY;
+  if (readTouch(touchX, touchY)) {
+    Serial.printf("Touched! X: %d, Y: %d\n", touchX, touchY);
+  }
+
+  // update the screen
   float display_dist = current_distance;
   float display_speed = current_speed;
-
   float tempC = analogReadTemp();
   uint32_t freeRam = rp2040.getFreeHeap();
 
@@ -86,6 +93,16 @@ void setup1() {
   motor->reset_beam_angle();
 }
 
+// define our system states
+enum SystemState {
+  STATE_BALANCING,
+  STATE_NEEDS_RESET,
+  STATE_WAITING
+};
+
+// global state variable for core 1
+SystemState current_state = STATE_BALANCING;
+
 void loop1() {
   // check for configuration updates via FIFO
   if (multicore_fifo_rvalid()) {
@@ -102,34 +119,45 @@ void loop1() {
   if (!sensor->timeoutOccurred() && mm < 1200) {
     distance_val = (float)mm / 10.0f; // mm to cm
     
-    // ball checks
+    // evaluate if the ball is out of bounds
     bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
     bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
 
-    if (ball_absent || ball_stuck) {
-      // STOP WORKING: ball is missing or stuck at the ends
-      if (myPID->GetMode() == AUTOMATIC) {
-        myPID->SetMode(MANUAL);   // turn off PID to prevent I-term windup
-        control_output = 0.0f;    // set target angle to 0 (flat/neutral)
-        motor->set_angle(control_output);
-      }
-      
-      if (ball_absent) {
-        Serial.printf("ERR: No Ball Detected (%.1f cm)\n", distance_val);
-      } else {
-        Serial.printf("ERR: Ball Stuck/Out of bounds (%.1f cm)\n", distance_val);
-      }
+    switch (current_state) {
+      case STATE_BALANCING:
+        if (ball_absent || ball_stuck) {
+          // ball messed up: transition to reset state
+          Serial.printf("ERR: Ball fault (%.1f cm). Initiating reset...\n", distance_val);
+          current_state = STATE_NEEDS_RESET;
+        } else {
+          // normal balancing routine
+          myPID->Compute();
+          motor->set_angle(control_output);
+          Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
+        }
+        break;
 
-    } else {
-      // NORMAL OPERATION: ball is within valid bounds
-      if (myPID->GetMode() != AUTOMATIC) {
-        myPID->SetMode(AUTOMATIC); // turn PID back on if it was disabled
-      }
+      case STATE_NEEDS_RESET:
+        // turn off PID so the I-term doesn't wind up during the 2-second sleep
+        myPID->SetMode(MANUAL); 
+        control_output = 0.0f; 
+        
+        // run the blocking reset routine
+        motor->reset_beam_angle(); 
+        
+        Serial.println("Reset complete. Waiting for ball at center...");
+        current_state = STATE_WAITING;
+        break;
 
-      myPID->Compute();
-      motor->set_angle(control_output);
-      
-      Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
+      case STATE_WAITING:
+        // continuously read the sensor without moving the motor.
+        // if the ball is placed within the setpoint window, resume!
+        if (distance_val >= BALL_RESUME_MIN_CM && distance_val <= BALL_RESUME_MAX_CM) {
+          Serial.printf("Ball detected at %.1f cm. Resuming balance!\n", distance_val);
+          myPID->SetMode(AUTOMATIC);
+          current_state = STATE_BALANCING;
+        }
+        break;
     }
 
     // push the newest calculated values out to the shared variables for core 0
