@@ -15,11 +15,22 @@
 // shared volatile variables to communicate between loops
 volatile float current_distance = 0.0f;
 volatile float current_speed = 0.0f;
+volatile float current_setpoint = BALL_SETPOINT_CM;
+volatile bool system_running = true;
 
 // globals for core 1
 float distance_val = BALL_SETPOINT_CM;
 float set_point = BALL_SETPOINT_CM;
 float control_output = 0.0f;
+
+SystemState current_state = STATE_BALANCING;
+
+// define our system states
+enum SystemState {
+  STATE_BALANCING,
+  STATE_NEEDS_RESET,
+  STATE_WAITING
+};
 
 PID* myPID;
 VL53L0X* sensor;
@@ -36,23 +47,51 @@ void setup() {
 
 void loop() {
   uint32_t loopStart = millis();
+  static uint32_t lastTouchTime = 0; // for debouncing
 
-  // check for touch input
   uint16_t touchX, touchY;
-  if (readTouch(touchX, touchY)) {
-    Serial.printf("Touched! X: %d, Y: %d\n", touchX, touchY);
+  
+  // Only process a touch if 200ms has passed since the last one
+  if (millis() - lastTouchTime > 200) {
+    if (readTouch(touchX, touchY)) {
+      lastTouchTime = millis();
+      
+      ButtonID btn = checkButtons(touchX, touchY);
+      
+      switch(btn) {
+        case BTN_TOGGLE_BALANCE:
+          system_running = !system_running;
+          Serial.println(system_running ? "System ON" : "System OFF");
+          break;
+          
+        case BTN_RESET:
+          // send a command to Core 1 via FIFO to force a reset
+          multicore_fifo_push_blocking(0x04); // we'll say 0x04 is the force reset command
+          Serial.println("Force Reset Triggered");
+          break;
+          
+        case BTN_SETPOINT_UP:
+          current_setpoint += 1.0f;
+          if (current_setpoint > 25.0f) current_setpoint = 25.0f; // cap it
+          break;
+          
+        case BTN_SETPOINT_DOWN:
+          current_setpoint -= 1.0f;
+          if (current_setpoint < 5.0f) current_setpoint = 5.0f;   // floor it
+          break;
+          
+        case BTN_NONE:
+        default:
+          break;
+      }
+    }
   }
 
-  // update the screen
-  float display_dist = current_distance;
-  float display_speed = current_speed;
-  float tempC = analogReadTemp();
-  uint32_t freeRam = rp2040.getFreeHeap();
+  // Update screen with the new variables
+  updateScreen(current_distance, current_speed, analogReadTemp(), rp2040.getFreeHeap(), 
+               millis() - loopStart, current_setpoint, system_running);
 
-  updateScreen(display_dist, display_speed, tempC, freeRam, millis() - loopStart);
-
-  digitalWrite(LED_BUILTIN, millis() % 1000 < 500 ? HIGH : LOW);
-  delay(100); 
+  delay(50); // Sped up the loop slightly for a more responsive screen
 }
 
 // core 1: ball balancing
@@ -93,16 +132,6 @@ void setup1() {
   motor->reset_beam_angle();
 }
 
-// define our system states
-enum SystemState {
-  STATE_BALANCING,
-  STATE_NEEDS_RESET,
-  STATE_WAITING
-};
-
-// global state variable for core 1
-SystemState current_state = STATE_BALANCING;
-
 void loop1() {
   // check for configuration updates via FIFO
   if (multicore_fifo_rvalid()) {
@@ -117,9 +146,27 @@ void loop1() {
   // read TOF and run PID loop
   uint16_t mm = sensor->readRangeContinuousMillimeters();
   if (!sensor->timeoutOccurred() && mm < 1200) {
-    distance_val = (float)mm / 10.0f; // mm to cm
+    float raw_distance = (float)mm / 10.0f; // mm to cm
     
-    // evaluate if the ball is out of bounds
+    // 3-point rolling average
+    static float history[3] = {0.0f, 0.0f, 0.0f};
+    static uint8_t h_idx = 0;
+    static bool first_read = true;
+
+    // instantly fill the array on the very first read to prevent the average from skewing low
+    if (first_read) {
+      history[0] = history[1] = history[2] = raw_distance;
+      first_read = false;
+    } else {
+      // overwrite the oldest reading with the newest one
+      history[h_idx] = raw_distance;
+      h_idx = (h_idx + 1) % 3; // loop back to index 0 after index 2
+    }
+
+    // Calculate the smoothed distance
+    distance_val = (history[0] + history[1] + history[2]) / 3.0f;
+    
+    // evaluate if the ball is out of bounds (using the smoothed distance_val)
     bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
     bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
 
@@ -147,6 +194,9 @@ void loop1() {
         
         Serial.println("Reset complete. Waiting for ball at center...");
         current_state = STATE_WAITING;
+        
+        // Reset the filter so old bad data doesn't pollute the resumption
+        first_read = true; 
         break;
 
       case STATE_WAITING:
