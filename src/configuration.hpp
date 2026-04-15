@@ -6,9 +6,17 @@
 #define SDA_PIN 4
 #define SCL_PIN 5
 
-// #define I2C_PORT i2c1
+// #define I2C_PORT I2C1
 // #define SDA_PIN 6
 // #define SCL_PIN 7
+
+// touch screen pins I2C1
+// NOTE: the ToF and the touchscreen can't share the same I2C bus, one must use
+// I2C0 and the other I2C1
+#define TOUCH_SDA 2
+#define TOUCH_SCL 3
+#define TOUCH_RST 6
+#define TOUCH_INT 7
 
 #define MOTOR_STEP_PIN 16
 #define MOTOR_DIR_PIN 17
@@ -37,12 +45,6 @@
 
 #define BALL_RESUME_MIN_CM 13.0f
 #define BALL_RESUME_MAX_CM 19.0f
-
-// touch screen pins i2c1
-#define TOUCH_SDA 2
-#define TOUCH_SCL 3
-#define TOUCH_RST 21
-#define TOUCH_INT 22
 #define FT6336U_ADDR 0x38
 
 enum MOTOR_DIRECTION { COUNTER_CLOCKWISE = 1, CLOCKWISE = 0 };

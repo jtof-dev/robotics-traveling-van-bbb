@@ -148,6 +148,25 @@ or, install `matplotlib` and run normally
 | pin 16  | STEP on TMC2209        |
 | pin 17  | DIR on TMC2209         |
 
+### ST7796S touchscreen
+
+| display pin | pi pico pin | notes / function | wire color |
+| :--- | :--- | :--- | :--- |
+| VCC | external 3.3V | power for the display | red |
+| GND | common GND | ground | black |
+| LCD_CS | GP20 | TFT chip select (`TFT_CS`) | orange |
+| LCD_RST | GP21 | TFT reset (`TFT_RST`) | yellow |
+| LCD_RS | GP22 | TFT data/command (`TFT_DC`) | green |
+| SDI (MOSI) | GP19 | SPI data input (`TFT_MOSI`) | blue |
+| SCK | GP18 | SPI clock (`TFT_SCLK`) | purple |
+| LED | 3.3V | backlight power. connect to 3.3V external power, it will overdraw the pico if connected to a data pin | white |
+| SDO (MISO) | GP16 | SPI data output (`TFT_MISO`) | gray |
+| CTP_SCL | GP3 | I2C1 clock (capacitive touch) | orange |
+| CTP_RST | GP6 | touch reset | yellow |
+| CTP_SDA | GP2 | I2C1 data (capacitive touch) | green |
+| CTP_INT | GP7 | touch interrupt | blue |
+| SD_CS | -- | SD card chip select (shares SPI bus with TFT) | -- |
+
 ### TMC2209 stepper motor driver
 
 | **pin** | **connection source** | **function**  | **notes**                          |

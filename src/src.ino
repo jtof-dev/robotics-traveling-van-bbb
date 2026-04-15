@@ -18,12 +18,12 @@ volatile float current_speed = 0.0f;
 volatile float current_setpoint = BALL_SETPOINT_CM;
 volatile bool system_running = true;
 
+bool hardware_present = true;
+
 // globals for core 1
 float distance_val = BALL_SETPOINT_CM;
 float set_point = BALL_SETPOINT_CM;
 float control_output = 0.0f;
-
-SystemState current_state = STATE_BALANCING;
 
 // define our system states
 enum SystemState {
@@ -31,6 +31,8 @@ enum SystemState {
   STATE_NEEDS_RESET,
   STATE_WAITING
 };
+
+SystemState current_state = STATE_BALANCING;
 
 PID* myPID;
 VL53L0X* sensor;
@@ -47,16 +49,26 @@ void setup() {
 
 void loop() {
   uint32_t loopStart = millis();
-  static uint32_t lastTouchTime = 0; // for debouncing
+  static uint32_t lastTouchTime = 0; // For debouncing
 
-  uint16_t touchX, touchY;
+  uint16_t rawX, rawY;
   
-  // Only process a touch if 200ms has passed since the last one
   if (millis() - lastTouchTime > 200) {
-    if (readTouch(touchX, touchY)) {
+    if (readTouch(rawX, rawY)) {
       lastTouchTime = millis();
       
-      ButtonID btn = checkButtons(touchX, touchY);
+      // --- THE PORTRAIT-TO-LANDSCAPE FIX ---
+      // 1. Swap the axes! The touch panel's Y is our screen's X.
+      uint16_t mappedX = rawY; 
+      // uint16_t mappedX = 480 - rawY; 
+      // uint16_t mappedY = rawX;       
+      uint16_t mappedY = 320 - rawX;
+
+      // Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\n", rawX, rawY, mappedX, mappedY);
+      Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\r\n", rawX, rawY, mappedX, mappedY);
+      
+      // Pass the swapped coordinates to your button checker
+      ButtonID btn = checkButtons(mappedX, mappedY);
       
       switch(btn) {
         case BTN_TOGGLE_BALANCE:
@@ -65,19 +77,18 @@ void loop() {
           break;
           
         case BTN_RESET:
-          // send a command to Core 1 via FIFO to force a reset
-          multicore_fifo_push_blocking(0x04); // we'll say 0x04 is the force reset command
+          multicore_fifo_push_blocking(0x04); 
           Serial.println("Force Reset Triggered");
           break;
           
         case BTN_SETPOINT_UP:
           current_setpoint += 1.0f;
-          if (current_setpoint > 25.0f) current_setpoint = 25.0f; // cap it
+          if (current_setpoint > 25.0f) current_setpoint = 25.0f; 
           break;
           
         case BTN_SETPOINT_DOWN:
           current_setpoint -= 1.0f;
-          if (current_setpoint < 5.0f) current_setpoint = 5.0f;   // floor it
+          if (current_setpoint < 5.0f) current_setpoint = 5.0f;   
           break;
           
         case BTN_NONE:
@@ -87,12 +98,13 @@ void loop() {
     }
   }
 
-  // Update screen with the new variables
+  // Update screen...
   updateScreen(current_distance, current_speed, analogReadTemp(), rp2040.getFreeHeap(), 
                millis() - loopStart, current_setpoint, system_running);
 
-  delay(50); // Sped up the loop slightly for a more responsive screen
+  delay(50); 
 }
+
 
 // core 1: ball balancing
 void setup1() {
@@ -107,13 +119,16 @@ void setup1() {
   gpio_pull_up(SCL_PIN);
 
   sensor = new VL53L0X(I2C_PORT, 0x29);
+  
+  // automatic hardware detection
   if (!sensor->init()) {
-    Serial.println("failed to detect VL53L0X sensor!");
-    while (1) { delay(10); } // yield to prevent watchdog crash
+    Serial.println("WARNING: VL53L0X missing! Entering UI Simulation Mode...");
+    hardware_present = false; 
+  } else {
+    Serial.println("Hardware detected. Normal mode active.");
+    sensor->setMeasurementTimingBudget(20000);
+    sensor->startContinuous(50);
   }
-
-  sensor->setMeasurementTimingBudget(20000);
-  sensor->startContinuous(50);
 
   // PID setup
   myPID = new PID(&distance_val, &control_output, &set_point, 
@@ -129,7 +144,11 @@ void setup1() {
   gpio_set_dir(MOTOR_DIR_PIN, GPIO_OUT);
 
   motor = new MOTOR(MOTOR_STEP_PIN, MOTOR_DIR_PIN);
-  motor->reset_beam_angle();
+  
+  // only run the 2-second blocking reset if hardware actually exists
+  if (hardware_present) {
+    motor->reset_beam_angle();
+  }
 }
 
 void loop1() {
@@ -140,77 +159,82 @@ void loop1() {
       uint32_t raw_val = multicore_fifo_pop_blocking();
       float new_kp = (float)raw_val / 100.0f;
       myPID->SetTunings(new_kp, myPID->GetKi(), myPID->GetKd());
+    } 
+    // pop any other commands (like BTN_RESET) so the FIFO doesn't jam up in simulation mode
+    else if (!hardware_present) {
+       Serial.printf("Sim Mode: Ignored Command 0x%02X\r\n", cmd);
     }
   }
 
-  // read TOF and run PID loop
+  // ui simulation mode
+  if (!hardware_present) {
+    // generate a smooth fake sine wave between 5cm and 26cm
+    // this makes the ball roll back and forth on the screen visualizer!
+    distance_val = 15.5f + (sin(millis() / 1000.0f) * 8.0f);
+    control_output = cos(millis() / 1000.0f) * 50.0f; // fake motor speed
+
+    current_distance = distance_val;
+    current_speed = control_output;
+
+    delay(50);
+    return; // skip the rest of the real hardware loop
+  }
+
+  // normal hardware mode
   uint16_t mm = sensor->readRangeContinuousMillimeters();
   if (!sensor->timeoutOccurred() && mm < 1200) {
     float raw_distance = (float)mm / 10.0f; // mm to cm
     
-    // 3-point rolling average
+    // 3 point rolling average
     static float history[3] = {0.0f, 0.0f, 0.0f};
     static uint8_t h_idx = 0;
     static bool first_read = true;
 
-    // instantly fill the array on the very first read to prevent the average from skewing low
     if (first_read) {
       history[0] = history[1] = history[2] = raw_distance;
       first_read = false;
     } else {
-      // overwrite the oldest reading with the newest one
       history[h_idx] = raw_distance;
-      h_idx = (h_idx + 1) % 3; // loop back to index 0 after index 2
+      h_idx = (h_idx + 1) % 3; 
     }
 
-    // Calculate the smoothed distance
     distance_val = (history[0] + history[1] + history[2]) / 3.0f;
     
-    // evaluate if the ball is out of bounds (using the smoothed distance_val)
+    // evaluate if the ball is out of bounds
     bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
     bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
 
     switch (current_state) {
       case STATE_BALANCING:
         if (ball_absent || ball_stuck) {
-          // ball messed up: transition to reset state
-          Serial.printf("ERR: Ball fault (%.1f cm). Initiating reset...\n", distance_val);
+          Serial.printf("ERR: Ball fault (%.1f cm). Initiating reset...\r\n", distance_val);
           current_state = STATE_NEEDS_RESET;
         } else {
-          // normal balancing routine
           myPID->Compute();
           motor->set_angle(control_output);
-          Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
+          // Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
         }
         break;
 
       case STATE_NEEDS_RESET:
-        // turn off PID so the I-term doesn't wind up during the 2-second sleep
         myPID->SetMode(MANUAL); 
         control_output = 0.0f; 
-        
-        // run the blocking reset routine
         motor->reset_beam_angle(); 
         
         Serial.println("Reset complete. Waiting for ball at center...");
         current_state = STATE_WAITING;
-        
-        // Reset the filter so old bad data doesn't pollute the resumption
         first_read = true; 
         break;
 
       case STATE_WAITING:
-        // continuously read the sensor without moving the motor.
-        // if the ball is placed within the setpoint window, resume!
         if (distance_val >= BALL_RESUME_MIN_CM && distance_val <= BALL_RESUME_MAX_CM) {
-          Serial.printf("Ball detected at %.1f cm. Resuming balance!\n", distance_val);
+          Serial.printf("Ball detected at %.1f cm. Resuming balance!\r\n", distance_val);
           myPID->SetMode(AUTOMATIC);
           current_state = STATE_BALANCING;
         }
         break;
     }
 
-    // push the newest calculated values out to the shared variables for core 0
     current_distance = distance_val;
     current_speed = control_output;
   }
