@@ -6,9 +6,7 @@
 #define SDA_PIN 4
 #define SCL_PIN 5
 
-// #define I2C_PORT I2C1
-// #define SDA_PIN 6
-// #define SCL_PIN 7
+#define TOUCH_I2C_PORT 1 // set to 0 for I2C0, or 1 for I2C1
 
 // touch screen pins I2C1
 // NOTE: the ToF and the touchscreen can't share the same I2C bus, one must use
@@ -29,7 +27,6 @@
 
 // #define MOTOR_STEP_INTERVAL_US 400
 
-#define BALL_SETPOINT_CM 17.0f
 #define PID_SAMPLE_MS 20 // matches VL53L0X timing
 
 #define DEFAULT_KP 0.75f
@@ -39,10 +36,10 @@
 #define PID_LIMIT_MIN -5.0f
 #define PID_LIMIT_MAX 5.0f
 
+#define BALL_SETPOINT_CM 17.0f
 #define BALL_MIN_DIST_CM 5.0f
-#define BALL_MAX_DIST_CM 26.0f
+#define BALL_MAX_DIST_CM 27.0f
 #define BALL_ABSENT_DIST_CM 28.5f
-
 #define BALL_RESUME_MIN_CM 13.0f
 #define BALL_RESUME_MAX_CM 19.0f
 #define FT6336U_ADDR 0x38

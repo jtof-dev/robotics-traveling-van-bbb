@@ -1,14 +1,5 @@
 # ball and beam robot
 
-## screen branch notes
-
-- small rewrite to `main.cpp` --> `src.ino`, because the project gets pre-compiled with `arduino-cli` and is then translated into pico-compatible code
-    - now in `src.ino`, core 0 uses `setup()` and `loop()`; core 1 uses `setup1()` and `loop1()`
-    - all `TFT_eSPI` user configuraiton can be done using flags in `CMakeLists.txt` without a local user config file
-    - make sure to install two `arduino-cli` lib dependencies before trying to build!
-
----
-
 everything needed to power a ball and beam balance robot (bbb) using a stepper motor, including the code, parts lists, CAD model, and instructions. when you're done, check out our [inverted pendulum robot](https://github.com/jtof-dev/robotics-traveling-van-ipr) and our [website](https://sce.nau.edu/capstone/projects/EE/2026/RoboVan/)
 
 ```ascii flowchart
@@ -65,7 +56,7 @@ everything needed to power a ball and beam balance robot (bbb) using a stepper m
 
 # software
 
-because there are no good screen libraries written for the pi pico, we are instead using one written for arduino, and then compiling a mixture of 
+because there are no good screen libraries written for the pi pico, we are instead using one written for arduino, and then compiling a mixture of arduino and pico code
 
 ## building
 

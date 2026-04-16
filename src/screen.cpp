@@ -4,7 +4,7 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
-// --- Layout Math (480x320 Screen) ---
+// layout ui variables for easy editing
 const int COL_LEFT = 10;
 const int COL_RIGHT = 250;
 const int BTN_WIDTH = 210;
@@ -14,7 +14,7 @@ const int ROW_1 = 20;
 const int ROW_2 = 100;
 const int ROW_3 = 190;
 
-// --- Beam Visualizer Math ---
+// beam visualizer math
 const int BEAM_Y = 290;
 const int BEAM_X_START = 30;
 const int BEAM_X_END = 450;
@@ -33,7 +33,7 @@ void initScreen() {
   tft.setRotation(1);
   tft.fillScreen(TFT_BLACK);
 
-  // --- Draw Static Buttons ---
+  // draw static buttons
   tft.drawRect(COL_RIGHT, ROW_1, BTN_WIDTH, BTN_HEIGHT, TFT_WHITE);
 
   tft.fillRect(COL_RIGHT, ROW_2, BTN_WIDTH, BTN_HEIGHT, TFT_DARKGREY);
@@ -45,24 +45,22 @@ void initScreen() {
   int half_btn = (BTN_WIDTH / 2) - 5;
   int plus_x = COL_RIGHT + half_btn + 10;
 
-  // [-] Button
+  // [-] button
   tft.fillRect(COL_RIGHT, ROW_3, half_btn, BTN_HEIGHT, TFT_MAROON);
   tft.drawRect(COL_RIGHT, ROW_3, half_btn, BTN_HEIGHT, TFT_WHITE);
   tft.setTextColor(TFT_WHITE);
   tft.drawCentreString("-", COL_RIGHT + (half_btn / 2), ROW_3 + 10, 4);
 
-  // [+] Button
+  // [+] button
   tft.fillRect(plus_x, ROW_3, half_btn, BTN_HEIGHT, TFT_DARKGREEN);
   tft.drawRect(plus_x, ROW_3, half_btn, BTN_HEIGHT, TFT_WHITE);
   tft.setTextColor(TFT_WHITE);
   tft.drawCentreString("+", plus_x + (half_btn / 2), ROW_3 + 10, 4);
 
-  // --- Draw Static Beam Visualizer Elements ---
+  // draw static beam visualizer elements
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   tft.setTextSize(1);
 
-  // FIX: Switched to left-aligned and right-aligned strings so they never bleed
-  // off the screen!
   tft.drawString("5cm (Motor)", 15, BEAM_Y - 30, 2);
   tft.drawRightString("26cm", 465, BEAM_Y - 30, 2);
 }
@@ -79,7 +77,7 @@ void updateScreen(float distance, float speed, float tempC, uint32_t freeRam,
 
   tft.setTextSize(2);
 
-  // --- Update Left Column (Metrics) ---
+  // update left column (metrics)
   tft.setCursor(COL_LEFT, ROW_1);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.printf("Dist:  %5.1f cm   \n", distance);
@@ -100,7 +98,7 @@ void updateScreen(float distance, float speed, float tempC, uint32_t freeRam,
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.printf("Ticks: %d        \n", counter);
 
-  // --- Update Right Column (ANTI-FLICKER LOGIC) ---
+  // update right column
   if (is_balancing != prev_balancing) {
     if (is_balancing) {
       tft.fillRect(COL_RIGHT + 1, ROW_1 + 1, BTN_WIDTH - 2, BTN_HEIGHT - 2,
@@ -119,20 +117,18 @@ void updateScreen(float distance, float speed, float tempC, uint32_t freeRam,
   }
 
   if (current_setpoint != prev_setpoint) {
-    // FIX: Made the erase box slightly taller (25px) to ensure clean erasing
     tft.fillRect(COL_RIGHT, ROW_3 - 25, BTN_WIDTH, 25, TFT_BLACK);
     tft.setTextColor(TFT_CYAN);
 
     char targetBuf[32];
     sprintf(targetBuf, "Target: %.1f cm", current_setpoint);
 
-    // FIX: Switched from Font 2 to Font 1 so the text stays normal size!
     tft.drawCentreString(targetBuf, COL_RIGHT + (BTN_WIDTH / 2), ROW_3 - 20, 1);
 
     prev_setpoint = current_setpoint;
   }
 
-  // --- LIVE BEAM VISUALIZER ---
+  // live beam visualizer
   int current_ball_x = mapDistanceToPixels(distance);
   int current_sp_x = mapDistanceToPixels(current_setpoint);
 

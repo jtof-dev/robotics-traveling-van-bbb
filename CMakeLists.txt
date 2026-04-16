@@ -33,11 +33,11 @@ string(JOIN " " TFT_DEFINES ${TFT_FLAG_LIST})
 
 add_custom_command(
     OUTPUT ${UF2_OUTPUT}
-    COMMAND ${ARDUINO_CLI} compile 
-            --fqbn rp2040:rp2040:rpipico 
+    COMMAND ${ARDUINO_CLI} compile
+            --fqbn rp2040:rp2040:rpipico
             --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/TFT_eSPI
-            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/pid        # Automatically pulls in your PID library
-            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/VL53L0X    # Automatically pulls in your TOF library
+            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/pid
+            --library ${CMAKE_CURRENT_SOURCE_DIR}/lib/VL53L0X
             --output-dir ${OUTPUT_DIR}
             --build-property "build.extra_flags=${TFT_DEFINES}"
             ${SKETCH_DIR}
@@ -45,5 +45,4 @@ add_custom_command(
     COMMENT "delegating bbb firmware compilation to arduino-cli..."
 )
 
-# 5. Create the main target that ties it all together
 add_custom_target(bbb ALL DEPENDS ${UF2_OUTPUT})

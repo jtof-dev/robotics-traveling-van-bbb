@@ -49,7 +49,7 @@ void setup() {
 
 void loop() {
   uint32_t loopStart = millis();
-  static uint32_t lastTouchTime = 0; // For debouncing
+  static uint32_t lastTouchTime = 0; // for debouncing
 
   uint16_t rawX, rawY;
   
@@ -57,8 +57,7 @@ void loop() {
     if (readTouch(rawX, rawY)) {
       lastTouchTime = millis();
       
-      // --- THE PORTRAIT-TO-LANDSCAPE FIX ---
-      // 1. Swap the axes! The touch panel's Y is our screen's X.
+      // makes the touch and screen think they are both horizontal
       uint16_t mappedX = rawY; 
       // uint16_t mappedX = 480 - rawY; 
       // uint16_t mappedY = rawX;       
@@ -67,7 +66,6 @@ void loop() {
       // Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\n", rawX, rawY, mappedX, mappedY);
       Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\r\n", rawX, rawY, mappedX, mappedY);
       
-      // Pass the swapped coordinates to your button checker
       ButtonID btn = checkButtons(mappedX, mappedY);
       
       switch(btn) {
@@ -98,7 +96,6 @@ void loop() {
     }
   }
 
-  // Update screen...
   updateScreen(current_distance, current_speed, analogReadTemp(), rp2040.getFreeHeap(), 
                millis() - loopStart, current_setpoint, system_running);
 
@@ -212,7 +209,6 @@ void loop1() {
         } else {
           myPID->Compute();
           motor->set_angle(control_output);
-          // Serial.printf("Dist: %.1f cm | Speed: %.1f steps/s\n", distance_val, control_output);
         }
         break;
 
