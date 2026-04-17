@@ -145,8 +145,8 @@ or, install `matplotlib` and run normally
 | :--- | :--- | :--- | :--- |
 | VCC | external 3.3V | power for the display | red |
 | GND | common GND | ground | black |
-| LCD_CS | GP20 | TFT chip select (`TFT_CS`) | orange |
-| LCD_RST | GP21 | TFT reset (`TFT_RST`) | yellow |
+| LCD_CS | GP21 | TFT chip select (`TFT_CS`) | orange |
+| LCD_RST | GP20 | TFT reset (`TFT_RST`) | yellow |
 | LCD_RS | GP22 | TFT data/command (`TFT_DC`) | green |
 | SDI (MOSI) | GP19 | SPI data input (`TFT_MOSI`) | blue |
 | SCK | GP18 | SPI clock (`TFT_SCLK`) | purple |
