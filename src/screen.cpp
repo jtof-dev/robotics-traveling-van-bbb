@@ -2,6 +2,10 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
+#ifndef USER_SETUP_LOADED
+#error "CMake failed to pass the TFT_eSPI flags! The screen will be white!"
+#endif
+
 TFT_eSPI tft = TFT_eSPI();
 
 // layout ui variables for easy editing
@@ -24,8 +28,10 @@ int mapDistanceToPixels(float dist) {
     dist = 5.0f;
   if (dist > 26.0f)
     dist = 26.0f;
-  return (int)((dist - 5.0f) * (BEAM_X_END - BEAM_X_START) / (26.0f - 5.0f) +
-               BEAM_X_START);
+
+  // Inverted mapping: 5cm -> BEAM_X_END (450), 26cm -> BEAM_X_START (30)
+  return (int)((dist - 5.0f) * (BEAM_X_START - BEAM_X_END) / (26.0f - 5.0f) +
+               BEAM_X_END);
 }
 
 void initScreen() {
@@ -124,7 +130,6 @@ void updateScreen(float distance, float speed, float tempC, uint32_t freeRam,
     sprintf(targetBuf, "Target: %.1f cm", current_setpoint);
 
     tft.drawCentreString(targetBuf, COL_RIGHT + (BTN_WIDTH / 2), ROW_3 - 20, 1);
-
     prev_setpoint = current_setpoint;
   }
 
@@ -132,22 +137,34 @@ void updateScreen(float distance, float speed, float tempC, uint32_t freeRam,
   int current_ball_x = mapDistanceToPixels(distance);
   int current_sp_x = mapDistanceToPixels(current_setpoint);
 
-  if (prev_ball_x != -1) {
-    tft.fillCircle(prev_ball_x, BEAM_Y, 12, TFT_BLACK);
-    tft.drawFastVLine(prev_sp_x, BEAM_Y - 10, 20, TFT_BLACK);
+  // Only redraw the beam elements if things have actually moved
+  if (current_ball_x != prev_ball_x || current_sp_x != prev_sp_x) {
+
+    // 1. Erase previous elements by drawing black over them
+    if (prev_ball_x != -1) {
+      tft.fillCircle(prev_ball_x, BEAM_Y, 12, TFT_BLACK);
+    }
+    if (prev_sp_x != -1) {
+      tft.drawFastVLine(prev_sp_x, BEAM_Y - 12, 24, TFT_BLACK);
+    }
+
+    // 2. Redraw the underlying beam line to fix any "holes" cut by the eraser
+    tft.drawLine(BEAM_X_START, BEAM_Y, BEAM_X_END, BEAM_Y, TFT_DARKGREY);
+
+    // 3. Draw the setpoint line
+    tft.drawFastVLine(current_sp_x, BEAM_Y - 10, 20, TFT_BLUE);
+
+    // 4. Draw the ball ON TOP of everything
+    if (distance >= 28.0f || distance <= 5.0f || distance >= 26.0f) {
+      tft.fillCircle(current_ball_x, BEAM_Y, 10, TFT_RED);
+    } else {
+      tft.fillCircle(current_ball_x, BEAM_Y, 10, TFT_ORANGE);
+    }
+
+    prev_ball_x = current_ball_x;
+    prev_sp_x = current_sp_x;
   }
 
-  tft.drawLine(BEAM_X_START, BEAM_Y, BEAM_X_END, BEAM_Y, TFT_DARKGREY);
-  tft.drawFastVLine(current_sp_x, BEAM_Y - 10, 20, TFT_BLUE);
-
-  if (distance >= 28.0f || distance <= 5.0f || distance >= 26.0f) {
-    tft.fillCircle(current_ball_x, BEAM_Y, 10, TFT_RED);
-  } else {
-    tft.fillCircle(current_ball_x, BEAM_Y, 10, TFT_ORANGE);
-  }
-
-  prev_ball_x = current_ball_x;
-  prev_sp_x = current_sp_x;
   counter++;
 }
 

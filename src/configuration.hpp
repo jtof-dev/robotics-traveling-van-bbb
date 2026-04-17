@@ -36,8 +36,8 @@
 #define PID_LIMIT_MIN -5.0f
 #define PID_LIMIT_MAX 5.0f
 
-#define BALL_SETPOINT_CM 17.0f
-#define BALL_MIN_DIST_CM 5.0f
+#define BALL_SETPOINT_CM 16.5f
+#define BALL_MIN_DIST_CM 3.0f
 #define BALL_MAX_DIST_CM 27.0f
 #define BALL_ABSENT_DIST_CM 28.5f
 #define BALL_RESUME_MIN_CM 13.0f

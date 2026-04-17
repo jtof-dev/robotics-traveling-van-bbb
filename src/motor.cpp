@@ -34,9 +34,9 @@ void MOTOR::reset_beam_angle() {
 
   // run the reset movements
   // changing the angle by 120 guarantees that the beam will be on the edge
-  change_angle(60 / angle_conversion);
+  change_angle(50 / angle_conversion);
   sleep_ms(1000);
-  change_angle(-30 / angle_conversion);
+  change_angle(-19 / angle_conversion);
   sleep_ms(1000);
   current_angle = 0;
 

@@ -38,32 +38,34 @@ PID* myPID;
 VL53L0X* sensor;
 MOTOR* motor;
 
-// core 0: touchscreen ui
+// ==============================================================================
+// CORE 0: TOUCHSCREEN UI
+// ==============================================================================
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   
   initScreen();
-  initTouch(); // <-- initialize the FT6336U
+  initTouch(); 
 }
 
 void loop() {
   uint32_t loopStart = millis();
-  static uint32_t lastTouchTime = 0; // for debouncing
+  
+  // State tracker for our button lockout
+  static bool was_touched = false; 
 
   uint16_t rawX, rawY;
+  bool is_touching = readTouch(rawX, rawY);
   
-  if (millis() - lastTouchTime > 200) {
-    if (readTouch(rawX, rawY)) {
-      lastTouchTime = millis();
+  if (is_touching) {
+    // Only fire the button logic if this is a NEW touch event
+    if (!was_touched) {
+      was_touched = true; // Lockout engaged until finger is lifted
       
-      // makes the touch and screen think they are both horizontal
       uint16_t mappedX = rawY; 
-      // uint16_t mappedX = 480 - rawY; 
-      // uint16_t mappedY = rawX;       
       uint16_t mappedY = 320 - rawX;
 
-      // Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\n", rawX, rawY, mappedX, mappedY);
       Serial.printf("Raw -> X: %d, Y: %d | Mapped -> X: %d, Y: %d\r\n", rawX, rawY, mappedX, mappedY);
       
       ButtonID btn = checkButtons(mappedX, mappedY);
@@ -76,7 +78,7 @@ void loop() {
           
         case BTN_RESET:
           multicore_fifo_push_blocking(0x04); 
-          Serial.println("Force Reset Triggered");
+          Serial.println("Force Reset Triggered by Core 0");
           break;
           
         case BTN_SETPOINT_UP:
@@ -94,6 +96,9 @@ void loop() {
           break;
       }
     }
+  } else {
+    // Finger was lifted, unlock the buttons
+    was_touched = false;
   }
 
   updateScreen(current_distance, current_speed, analogReadTemp(), rp2040.getFreeHeap(), 
@@ -102,11 +107,14 @@ void loop() {
   delay(50); 
 }
 
-
-// core 1: ball balancing
+// ==============================================================================
+// CORE 1: BALL BALANCING & MOTOR CONTROL
+// ==============================================================================
 void setup1() {
-  // allow sensors and power rails to stabilize
   delay(2000); 
+
+  // FLUSH THE FIFO: Clear out any garbage from soft-reboots!
+  while (multicore_fifo_rvalid()) multicore_fifo_pop_blocking();
 
   // TOF sensor hardware init
   i2c_init(I2C_PORT, 400 * 1000);
@@ -117,7 +125,6 @@ void setup1() {
 
   sensor = new VL53L0X(I2C_PORT, 0x29);
   
-  // automatic hardware detection
   if (!sensor->init()) {
     Serial.println("WARNING: VL53L0X missing! Entering UI Simulation Mode...");
     hardware_present = false; 
@@ -142,22 +149,32 @@ void setup1() {
 
   motor = new MOTOR(MOTOR_STEP_PIN, MOTOR_DIR_PIN);
   
-  // only run the 2-second blocking reset if hardware actually exists
   if (hardware_present) {
     motor->reset_beam_angle();
   }
 }
 
 void loop1() {
-  // check for configuration updates via FIFO
-  if (multicore_fifo_rvalid()) {
+  set_point = current_setpoint;
+
+  // 1. DRAIN THE FIFO (Prevents Core 0 freeze & handles UI commands)
+  while (multicore_fifo_rvalid()) {
     uint32_t cmd = multicore_fifo_pop_blocking();
-    if (cmd == 0x01) { // CMD_UPDATE_KP
-      uint32_t raw_val = multicore_fifo_pop_blocking();
-      float new_kp = (float)raw_val / 100.0f;
-      myPID->SetTunings(new_kp, myPID->GetKi(), myPID->GetKd());
+    
+    if (cmd == 0x01) { 
+      // ONLY block for a second value if one actually exists!
+      if (multicore_fifo_rvalid()) {
+        uint32_t raw_val = multicore_fifo_pop_blocking();
+        float new_kp = (float)raw_val / 100.0f;
+        myPID->SetTunings(new_kp, myPID->GetKi(), myPID->GetKd());
+      } else {
+        Serial.println("ERR: Received 0x01 but missing payload!");
+      }
     } 
-    // pop any other commands (like BTN_RESET) so the FIFO doesn't jam up in simulation mode
+    else if (cmd == 0x04) {
+      current_state = STATE_NEEDS_RESET;
+      Serial.println("Core 1: Executing Hardware Reset...");
+    }
     else if (!hardware_present) {
        Serial.printf("Sim Mode: Ignored Command 0x%02X\r\n", cmd);
     }
@@ -165,27 +182,26 @@ void loop1() {
 
   // ui simulation mode
   if (!hardware_present) {
-    // generate a smooth fake sine wave between 5cm and 26cm
-    // this makes the ball roll back and forth on the screen visualizer!
     distance_val = 15.5f + (sin(millis() / 1000.0f) * 8.0f);
-    control_output = cos(millis() / 1000.0f) * 50.0f; // fake motor speed
+    control_output = cos(millis() / 1000.0f) * 50.0f; 
 
     current_distance = distance_val;
     current_speed = control_output;
 
     delay(50);
-    return; // skip the rest of the real hardware loop
+    return; 
   }
 
   // normal hardware mode
+  static float history[3] = {0.0f, 0.0f, 0.0f};
+  static uint8_t h_idx = 0;
+  static bool first_read = true;
+
   uint16_t mm = sensor->readRangeContinuousMillimeters();
+  
+  // 2. SENSOR CHECK
   if (!sensor->timeoutOccurred() && mm < 1200) {
-    float raw_distance = (float)mm / 10.0f; // mm to cm
-    
-    // 3 point rolling average
-    static float history[3] = {0.0f, 0.0f, 0.0f};
-    static uint8_t h_idx = 0;
-    static bool first_read = true;
+    float raw_distance = (float)mm / 10.0f; 
 
     if (first_read) {
       history[0] = history[1] = history[2] = raw_distance;
@@ -194,19 +210,29 @@ void loop1() {
       history[h_idx] = raw_distance;
       h_idx = (h_idx + 1) % 3; 
     }
-
     distance_val = (history[0] + history[1] + history[2]) / 3.0f;
+  } else {
+    // If sensor loses ball, force a fault distance
+    distance_val = BALL_ABSENT_DIST_CM; 
+  }
     
-    // evaluate if the ball is out of bounds
-    bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
-    bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
+  bool ball_absent = (distance_val >= BALL_ABSENT_DIST_CM);
+  bool ball_stuck = (distance_val <= BALL_MIN_DIST_CM || distance_val >= BALL_MAX_DIST_CM);
 
+  // 3. THE STATE MACHINE
+  if (!system_running && current_state != STATE_NEEDS_RESET) {
+    myPID->SetMode(MANUAL);
+    control_output = 0.0f;
+    motor->set_angle(0.0f); 
+    current_state = STATE_BALANCING; 
+  } 
+  else {
     switch (current_state) {
       case STATE_BALANCING:
         if (ball_absent || ball_stuck) {
           Serial.printf("ERR: Ball fault (%.1f cm). Initiating reset...\r\n", distance_val);
           current_state = STATE_NEEDS_RESET;
-        } else {
+        } else if (system_running) {
           myPID->Compute();
           motor->set_angle(control_output);
         }
@@ -227,13 +253,15 @@ void loop1() {
           Serial.printf("Ball detected at %.1f cm. Resuming balance!\r\n", distance_val);
           myPID->SetMode(AUTOMATIC);
           current_state = STATE_BALANCING;
+        } else if (!system_running) {
+          motor->set_angle(0.0f); 
         }
         break;
     }
-
-    current_distance = distance_val;
-    current_speed = control_output;
   }
 
+  current_distance = distance_val;
+  current_speed = control_output;
+  
   delay(50);
 }
