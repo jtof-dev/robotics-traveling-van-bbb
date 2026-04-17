@@ -10,7 +10,7 @@ set(UF2_OUTPUT ${OUTPUT_DIR}/src.ino.uf2)
 set(TFT_FLAG_LIST
     "-DUSER_SETUP_LOADED=1"
     "-DST7796_DRIVER=1"
-    "-DTFT_MISO=8"
+    "-DTFT_MISO=0"
     "-DTFT_MOSI=19"
     "-DTFT_SCLK=18"
     "-DTFT_CS=21"

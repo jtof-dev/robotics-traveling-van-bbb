@@ -196,6 +196,7 @@ void loop1() {
   static float history[3] = {0.0f, 0.0f, 0.0f};
   static uint8_t h_idx = 0;
   static bool first_read = true;
+  static float smoothed_angle = 0.0f; // --- NEW: Added for sliding gradient ---
 
   uint16_t mm = sensor->readRangeContinuousMillimeters();
   
@@ -223,6 +224,7 @@ void loop1() {
   if (!system_running && current_state != STATE_NEEDS_RESET) {
     myPID->SetMode(MANUAL);
     control_output = 0.0f;
+    smoothed_angle = 0.0f;   // --- NEW: Reset smoothing variable ---
     motor->set_angle(0.0f); 
     current_state = STATE_BALANCING; 
   } 
@@ -234,13 +236,36 @@ void loop1() {
           current_state = STATE_NEEDS_RESET;
         } else if (system_running) {
           myPID->Compute();
-          motor->set_angle(control_output);
+
+          // --- NEW: ADAPTIVE SMOOTHING GRADIENT ---
+          // 1. How far is the ball from the target?
+          float error = abs(set_point - distance_val);
+
+          // 2. Define the bounds of our sliding gradient
+          float max_error = 15.0f; // Distance (cm) where max smoothing kicks in
+          float min_alpha = 0.10f; // Heavy smoothing for the edges (10% new, 90% old)
+          float max_alpha = 1.00f; // No smoothing for the center (100% new)
+
+          // 3. Calculate alpha (closer to center = closer to 1.0)
+          float alpha = max_alpha - ((error / max_error) * (max_alpha - min_alpha));
+          
+          // Clamp alpha just in case the ball flies out of bounds
+          if (alpha < min_alpha) alpha = min_alpha;
+          if (alpha > max_alpha) alpha = max_alpha;
+
+          // 4. Apply the Exponential Moving Average filter
+          smoothed_angle = (alpha * control_output) + ((1.0f - alpha) * smoothed_angle);
+
+          // Send the smoothed angle to the motor
+          motor->set_angle(smoothed_angle);
+          // ----------------------------------------
         }
         break;
 
       case STATE_NEEDS_RESET:
         myPID->SetMode(MANUAL); 
         control_output = 0.0f; 
+        smoothed_angle = 0.0f;   // --- NEW: Reset smoothing variable ---
         motor->reset_beam_angle(); 
         
         Serial.println("Reset complete. Waiting for ball at center...");
