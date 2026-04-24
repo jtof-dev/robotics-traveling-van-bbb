@@ -110,6 +110,8 @@ or, install `matplotlib` and run normally
 
 ![circuit diagram](./datasheets/bbb_circuit_diagram.webp)
 
+- for CAD model assembly and instructions, check out [`CAD/`](https://github.com/jtof-dev/robotics-traveling-van-bbb/tree/main/CAD)
+
 ## parts list
 
 - [NEMA 17](https://a.co/d/05dRpuKu) stepper motor
